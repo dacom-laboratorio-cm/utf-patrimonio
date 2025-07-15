@@ -1,0 +1,27 @@
+{% macro render_pagination(pagination, sort, direction) %}
+{% if pagination.pages > 1 %}
+<nav aria-label="Navegação de páginas">
+  <ul class="pagination">
+    {% if pagination.has_prev %}
+      <li class="page-item">
+        <a class="page-link" href="{{ request.path }}?page={{ pagination.prev_num }}&sort={{ sort }}&direction={{ direction }}">Anterior</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+    {% endif %}
+    {% for p in range(1, pagination.pages + 1) %}
+      <li class="page-item {% if p == pagination.page %}active{% endif %}">
+        <a class="page-link" href="{{ request.path }}?page={{ p }}&sort={{ sort }}&direction={{ direction }}">{{ p }}</a>
+      </li>
+    {% endfor %}
+    {% if pagination.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="{{ request.path }}?page={{ pagination.next_num }}&sort={{ sort }}&direction={{ direction }}">Próxima</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %} 

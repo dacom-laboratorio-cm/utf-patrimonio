@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Histórico de Levantamentos{% endblock %}
+{% block content %}
+<h2>Histórico de Levantamentos</h2>
+<a href="/levantamento" class="btn btn-success mb-3">Novo Levantamento</a>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Local</th>
+            <th>Responsável</th>
+            <th>Data</th>
+            <th>Detalhes</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for l in levantamentos %}
+        <tr>
+            <td>{{ l.id }}</td>
+            <td>{{ l.local }}</td>
+            <td>{{ l.responsavel }}</td>
+            <td>{{ l.data.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td><a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=l.id) }}" class="btn btn-sm btn-primary">Ver</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 

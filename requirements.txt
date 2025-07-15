@@ -1,0 +1,7 @@
+Flask>=2.2
+Flask-SQLAlchemy>=3.0
+Flask-Migrate>=4.0
+pdfplumber>=0.10
+Werkzeug>=2.2
+Flask-WTF>=1.1
+WTForms>=3.0

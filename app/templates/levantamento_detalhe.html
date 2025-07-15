@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Detalhe do Levantamento{% endblock %}
+{% block content %}
+<h2>Detalhe do Levantamento</h2>
+<p><strong>ID:</strong> {{ levantamento.id }}</p>
+<p><strong>Local:</strong> {{ levantamento.local }}</p>
+<p><strong>Responsável:</strong> {{ levantamento.responsavel }}</p>
+<p><strong>Data:</strong> {{ levantamento.data.strftime('%d/%m/%Y %H:%M') }}</p>
+
+<h4>Itens encontrados no local correto</h4>
+<ul>
+    {% for item in itens if item.status == 'encontrado_correto' %}
+        <li>{{ item.tombo }}</li>
+    {% endfor %}
+</ul>
+<h4>Itens encontrados em outro local</h4>
+<ul>
+    {% for item in itens if item.status == 'encontrado_erro_local' %}
+        <li>{{ item.tombo }} <span class="text-warning">(no banco: {{ item.local_banco }})</span></li>
+    {% endfor %}
+</ul>
+<h4>Itens desconhecidos</h4>
+<ul>
+    {% for item in itens if item.status == 'desconhecido' %}
+        <li class="text-danger">{{ item.tombo }}</li>
+    {% endfor %}
+</ul>
+<h4>Itens faltantes</h4>
+<ul>
+    {% for item in itens if item.status == 'faltante' %}
+        <li class="text-danger">{{ item.tombo }}</li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('patrimonio.levantamentos') }}" class="btn btn-secondary mt-3">Voltar ao histórico</a>
+{% endblock %} 

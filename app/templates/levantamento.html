@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Levantamento de Patrimônio{% endblock %}
+{% block content %}
+<h2>Levantamento de Patrimônio</h2>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.local.label(class="form-label") }}
+        {{ form.local(class="form-select") }}
+    </div>
+    <div class="mb-3">
+        {{ form.responsavel.label(class="form-label") }}
+        {{ form.responsavel(class="form-control") }}
+    </div>
+    <div class="mb-3">
+        {{ form.tombos.label(class="form-label") }}
+        {{ form.tombos(class="form-control", rows=6) }}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+
+{% if relatorio %}
+    <h3 class="mt-4">Relatório do Levantamento</h3>
+    <p><strong>Local:</strong> {{ relatorio.local }}</p>
+    <p><strong>Responsável:</strong> {{ relatorio.responsavel }}</p>
+    <ul>
+        <li><strong>Itens encontrados no local correto:</strong> {{ relatorio.encontrados_correto|length }}</li>
+        <li><strong>Itens encontrados em outro local:</strong> {{ relatorio.encontrados_erro_local|length }}</li>
+        <li><strong>Itens desconhecidos:</strong> {{ relatorio.desconhecidos|length }}</li>
+        <li><strong>Itens faltantes:</strong> {{ relatorio.faltantes|length }}</li>
+    </ul>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Encontrados no local correto</h5>
+            <ul>
+                {% for t in relatorio.encontrados_correto %}
+                    <li>{{ t }}</li>
+                {% endfor %}
+            </ul>
+            <h5>Encontrados em outro local</h5>
+            <ul>
+                {% for t, local in relatorio.encontrados_erro_local %}
+                    <li>{{ t }} <span class="text-warning">(no banco: {{ local }})</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h5>Desconhecidos</h5>
+            <ul>
+                {% for t in relatorio.desconhecidos %}
+                    <li class="text-danger">{{ t }}</li>
+                {% endfor %}
+            </ul>
+            <h5>Faltantes</h5>
+            <ul>
+                {% for t in relatorio.faltantes %}
+                    <li class="text-danger">{{ t }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <!-- Botão para salvar levantamento pode ser adicionado aqui futuramente -->
+    <form method="post" action="/levantamento/salvar">
+        <input type="hidden" name="local" value="{{ relatorio.local }}">
+        <input type="hidden" name="responsavel" value="{{ relatorio.responsavel }}">
+        <input type="hidden" name="encontrados_correto" value="{{ relatorio.encontrados_correto|join(',') }}">
+        <input type="hidden" name="encontrados_erro_local" value="{{ relatorio.encontrados_erro_local|map(attribute=0)|join(',') }}">
+        <input type="hidden" name="encontrados_erro_local_locais" value="{{ relatorio.encontrados_erro_local|map(attribute=1)|join(',') }}">
+        <input type="hidden" name="desconhecidos" value="{{ relatorio.desconhecidos|join(',') }}">
+        <input type="hidden" name="faltantes" value="{{ relatorio.faltantes|join(',') }}">
+        <button type="submit" class="btn btn-success mt-3">Salvar levantamento</button>
+    </form>
+{% endif %}
+{% endblock %} 

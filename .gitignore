@@ -1,0 +1,36 @@
+# Ambiente virtual
+venv/
+
+# Banco de dados e arquivos de instância
+instance/
+*.db
+*.sqlite3
+
+# Arquivos de migração
+migrations/versions/
+
+# Arquivos temporários e cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+
+# Uploads e arquivos gerados
+uploads/
+csv/
+logs/
+
+# Configurações locais
+.env
+*.env
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Relatórios e exportações
+*.csv
+*.xlsx
+*.pdf 

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Itens do Patrimônio{% endblock %}
+{% block content %}
+<h2>Itens do Patrimônio</h2>
+<form method="get" class="row g-3 mb-4" id="filtro-form" action="">
+    {{ filtro_form.hidden_tag() }}
+    <div class="col-auto">
+        {{ filtro_form.tombo.label(class="form-label") }}
+        {{ filtro_form.tombo(class="form-control", placeholder="Buscar tombo", value=tombo or '') }}
+    </div>
+    <div class="col-auto">
+        {{ filtro_form.local.label(class="form-label") }}
+        {{ filtro_form.local(class="form-select") }}
+    </div>
+    <div class="col-auto">
+        {{ filtro_form.responsavel.label(class="form-label") }}
+        {{ filtro_form.responsavel(class="form-select") }}
+    </div>
+    <div class="col-auto align-self-end">
+        {{ filtro_form.submit(class="btn btn-primary") }}
+    </div>
+</form>
+<script>
+// Ao submeter o filtro, redireciona para a URL RESTful correta
+document.getElementById('filtro-form').onsubmit = function(e) {
+    e.preventDefault();
+    const local = document.getElementsByName('local')[0].value;
+    const responsavel = document.getElementsByName('responsavel')[0].value;
+    const tombo = document.getElementsByName('tombo')[0].value;
+    let url = '/itens/';
+    if (local && responsavel) {
+        url += 'local/' + encodeURIComponent(local) + '/responsavel/' + encodeURIComponent(responsavel) + '/';
+    } else if (local) {
+        url += 'local/' + encodeURIComponent(local) + '/';
+    } else if (responsavel) {
+        url += 'responsavel/' + encodeURIComponent(responsavel) + '/';
+    }
+    // Mantém ordenação, paginação e tombo
+    const params = [];
+    if (tombo) params.push('tombo=' + encodeURIComponent(tombo));
+    if ('{{ sort }}') params.push('sort={{ sort }}');
+    if ('{{ direction }}') params.push('direction={{ direction }}');
+    if (params.length) url += '?' + params.join('&');
+    window.location = url;
+};
+</script>
+{% from '_sort_link.html' import sort_link %}
+{% from '_pagination.html' import render_pagination %}
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>{{ sort_link('tombo', 'Tombo', sort, direction, filtro_local, filtro_responsavel) }}</th>
+            <th>{{ sort_link('descricao', 'Descrição', sort, direction, filtro_local, filtro_responsavel) }}</th>
+            <th>{{ sort_link('valor', 'Valor', sort, direction, filtro_local, filtro_responsavel) }}</th>
+            <th>{{ sort_link('termo_data', 'Termo/Data', sort, direction, filtro_local, filtro_responsavel) }}</th>
+            <th>{{ sort_link('local', 'Local', sort, direction, filtro_local, filtro_responsavel) }}</th>
+            <th>{{ sort_link('responsavel', 'Responsável', sort, direction, filtro_local, filtro_responsavel) }}</th>
+            <th>{{ sort_link('arquivo_pdf', 'Arquivo PDF', sort, direction, filtro_local, filtro_responsavel) }}</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in itens %}
+        <tr>
+            <td>{{ item.tombo }}</td>
+            <td>{{ item.descricao }}</td>
+            <td>{{ item.valor }}</td>
+            <td>{{ item.termo_data }}</td>
+            <td>{{ item.local }}</td>
+            <td>{{ item.responsavel }}</td>
+            <td>{{ item.arquivo_pdf }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if pagination.pages > 1 %}
+{{ render_pagination(pagination, sort, direction) }}
+{% endif %}
+{% endblock %} 

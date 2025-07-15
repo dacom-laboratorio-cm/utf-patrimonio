@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Importar PDFs{% endblock %}
+{% block content %}
+<h2>Importar PDFs</h2>
+<form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.pdfs.label(class="form-label") }}
+        {{ form.pdfs(class="form-control", multiple=True) }}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+
+{% if logs %}
+    <h3 class="mt-4">Resultado do Processamento</h3>
+    {% for log in logs %}
+        <div class="card mb-2">
+            <div class="card-body">
+                <strong>Arquivo:</strong> {{ log.arquivo }}<br>
+                <strong>Responsável:</strong> {{ log.responsavel }}<br>
+                <strong>Qtd. de Bens (PDF):</strong> {{ log.qtd_bens }}<br>
+                <strong>Itens extraídos:</strong> {{ log.qtd_itens }}<br>
+                {% if log.divergencia %}
+                    <span class="text-warning">Divergência entre Qtd. de Bens e itens extraídos!</span><br>
+                {% endif %}
+                {% if log.erro %}
+                    <span class="text-danger">Erro: {{ log.erro }}</span>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endblock %} 

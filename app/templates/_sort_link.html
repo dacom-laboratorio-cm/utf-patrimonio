@@ -1,0 +1,17 @@
+{% macro sort_link(col, label, sort, direction, filtro_local, filtro_responsavel) %}
+    {% set dir = 'asc' if sort != col or direction == 'desc' else 'desc' %}
+    {% set base_url = '/itens/' %}
+    {% if filtro_local and filtro_responsavel %}
+        {% set base_url = '/itens/local/' ~ filtro_local ~ '/responsavel/' ~ filtro_responsavel ~ '/' %}
+    {% elif filtro_local %}
+        {% set base_url = '/itens/local/' ~ filtro_local ~ '/' %}
+    {% elif filtro_responsavel %}
+        {% set base_url = '/itens/responsavel/' ~ filtro_responsavel ~ '/' %}
+    {% endif %}
+    <a href="{{ base_url }}?page=1&sort={{ col }}&direction={{ dir }}">
+        {{ label }}
+        {% if sort == col %}
+            {% if direction == 'asc' %}&#9650;{% else %}&#9660;{% endif %}
+        {% endif %}
+    </a>
+{% endmacro %} 

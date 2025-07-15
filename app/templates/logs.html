@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Logs de Processamento{% endblock %}
+{% block content %}
+<h2>Logs de Processamento</h2>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Arquivo</th>
+            <th>Responsável</th>
+            <th>Qtd. Bens (PDF)</th>
+            <th>Itens Extraídos</th>
+            <th>Divergência</th>
+            <th>Erro</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for log in logs %}
+        <tr>
+            <td>{{ log.arquivo_pdf }}</td>
+            <td>{{ log.responsavel }}</td>
+            <td>{{ log.qtd_bens_pdf }}</td>
+            <td>{{ log.qtd_itens_extraidos }}</td>
+            <td>{% if log.divergencia %}<span class="text-warning">Sim</span>{% else %}Não{% endif %}</td>
+            <td>{% if log.erro %}<span class="text-danger">{{ log.erro }}</span>{% endif %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 
