@@ -6,6 +6,8 @@ from ..models import ItemPatrimonio, LogProcessamento, Levantamento, Levantament
 from . import bp
 from .services import processar_pdf
 from .forms import UploadPDFForm, FiltroItensForm, LevantamentoForm
+import csv
+from io import StringIO, TextIOWrapper
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -15,7 +17,7 @@ def allowed_file(filename):
 
 @bp.route('/')
 def index():
-    return redirect(url_for('patrimonio.itens'))
+    return render_template('index.html')
 
 @bp.route('/upload', methods=['GET', 'POST'])
 def upload():
@@ -123,9 +125,25 @@ def levantamento():
     if form.validate_on_submit():
         local = form.local.data
         responsavel = form.responsavel.data
-        # Processar tombos: aceita um por linha ou separados por vírgula
-        tombos_input = form.tombos.data.replace(',', '\n')
-        tombos_lista = [t.strip() for t in tombos_input.split('\n') if t.strip()]
+        tombos_lista = []
+        descricoes_csv = {}
+        # Processar CSV se enviado
+        if form.csvfile.data:
+            file = form.csvfile.data
+            stream = TextIOWrapper(file.stream, encoding='utf-8')
+            reader = csv.DictReader(stream)
+            for row in reader:
+                t = row.get('tombo', '').strip()
+                d = row.get('descricao', '').strip()
+                if t:
+                    tombos_lista.append(t)
+                    if d:
+                        descricoes_csv[t] = d
+        # Processar tombos do textarea (adiciona ao que veio do CSV)
+        tombos_input = form.tombos.data.replace(',', '\n') if form.tombos.data else ''
+        for t in [t.strip() for t in tombos_input.split('\n') if t.strip()]:
+            if t not in tombos_lista:
+                tombos_lista.append(t)
         tombos_set = set(tombos_lista)
         # Buscar todos os itens do local no banco
         itens_banco_local = ItemPatrimonio.query.filter_by(local=local).all()
@@ -148,7 +166,7 @@ def levantamento():
             'responsavel': responsavel,
             'encontrados_correto': encontrados_correto,
             'encontrados_erro_local': [(t, local_erro_dict.get(t, '')) for t in encontrados_erro_local],
-            'desconhecidos': desconhecidos,
+            'desconhecidos': [(t, descricoes_csv.get(t, '')) for t in desconhecidos],
             'faltantes': faltantes,
             'tombos_digitados': tombos_lista
         }
@@ -162,7 +180,16 @@ def salvar_levantamento():
     encontrados_correto = request.form.get('encontrados_correto', '').split(',') if request.form.get('encontrados_correto') else []
     encontrados_erro_local = request.form.get('encontrados_erro_local', '').split(',') if request.form.get('encontrados_erro_local') else []
     encontrados_erro_local_locais = request.form.get('encontrados_erro_local_locais', '').split(',') if request.form.get('encontrados_erro_local_locais') else []
-    desconhecidos = request.form.get('desconhecidos', '').split(',') if request.form.get('desconhecidos') else []
+    desconhecidos_raw = request.form.get('desconhecidos', '')
+    desconhecidos = []
+    descricoes_desconhecidos = []
+    if desconhecidos_raw:
+        for item in desconhecidos_raw.split(';'):
+            if not item.strip():
+                continue
+            parts = item.split('|', 1)
+            desconhecidos.append(parts[0])
+            descricoes_desconhecidos.append(parts[1] if len(parts) > 1 else '')
     faltantes = request.form.get('faltantes', '').split(',') if request.form.get('faltantes') else []
     # Cria levantamento
     levantamento = Levantamento(local=local, responsavel=responsavel)
@@ -178,9 +205,10 @@ def salvar_levantamento():
             local_banco = encontrados_erro_local_locais[idx] if idx < len(encontrados_erro_local_locais) else ''
             db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='encontrado_erro_local', local_banco=local_banco))
     # Salva desconhecidos
-    for t in desconhecidos:
+    for idx, t in enumerate(desconhecidos):
         if t:
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='desconhecido', local_banco=None))
+            descricao = descricoes_desconhecidos[idx] if idx < len(descricoes_desconhecidos) else ''
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='desconhecido', local_banco=None, descricao=descricao))
     # Salva faltantes
     for t in faltantes:
         if t:

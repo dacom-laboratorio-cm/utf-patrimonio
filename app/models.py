@@ -38,4 +38,5 @@ class LevantamentoItem(db.Model):
     levantamento_id = db.Column(db.Integer, db.ForeignKey('levantamento.id'))
     tombo = db.Column(db.String(32), nullable=False)
     status = db.Column(db.String(32))  # 'encontrado_correto', 'encontrado_erro_local', 'desconhecido', 'faltante'
-    local_banco = db.Column(db.String(32))  # Local cadastrado no banco (se houver) 
+    local_banco = db.Column(db.String(32))  # Local cadastrado no banco (se houver)
+    descricao = db.Column(db.Text)  # Descrição do item desconhecido (se fornecida) 

@@ -2,7 +2,7 @@
 {% block title %}Levantamento de Patrimônio{% endblock %}
 {% block content %}
 <h2>Levantamento de Patrimônio</h2>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <div class="mb-3">
         {{ form.local.label(class="form-label") }}
@@ -15,6 +15,10 @@
     <div class="mb-3">
         {{ form.tombos.label(class="form-label") }}
         {{ form.tombos(class="form-control", rows=6) }}
+    </div>
+    <div class="mb-3">
+        {{ form.csvfile.label(class="form-label") }}
+        {{ form.csvfile(class="form-control") }}
     </div>
     {{ form.submit(class="btn btn-primary") }}
 </form>
@@ -47,8 +51,8 @@
         <div class="col-md-6">
             <h5>Desconhecidos</h5>
             <ul>
-                {% for t in relatorio.desconhecidos %}
-                    <li class="text-danger">{{ t }}</li>
+                {% for t, desc in relatorio.desconhecidos %}
+                    <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
                 {% endfor %}
             </ul>
             <h5>Faltantes</h5>
@@ -66,7 +70,7 @@
         <input type="hidden" name="encontrados_correto" value="{{ relatorio.encontrados_correto|join(',') }}">
         <input type="hidden" name="encontrados_erro_local" value="{{ relatorio.encontrados_erro_local|map(attribute=0)|join(',') }}">
         <input type="hidden" name="encontrados_erro_local_locais" value="{{ relatorio.encontrados_erro_local|map(attribute=1)|join(',') }}">
-        <input type="hidden" name="desconhecidos" value="{{ relatorio.desconhecidos|join(',') }}">
+        <input type="hidden" name="desconhecidos" value="{% for t, desc in relatorio.desconhecidos %}{{ t }}|{{ desc }};{% endfor %}">
         <input type="hidden" name="faltantes" value="{{ relatorio.faltantes|join(',') }}">
         <button type="submit" class="btn btn-success mt-3">Salvar levantamento</button>
     </form>
