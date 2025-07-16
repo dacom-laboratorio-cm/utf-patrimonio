@@ -7,29 +7,60 @@
 <p><strong>Responsável:</strong> {{ levantamento.responsavel }}</p>
 <p><strong>Data:</strong> {{ levantamento.data.strftime('%d/%m/%Y %H:%M') }}</p>
 
-<h4>Itens encontrados no local correto</h4>
+<h4>Bens sem inconsistência, encontrados corretamente no {{ levantamento.local }}</h4>
 <ul>
     {% for item in itens if item.status == 'encontrado_correto' %}
-        <li>{{ item.tombo }}</li>
+        <li>{{ item.tombo }}{% if item.descricao %} <span class="text-muted">({{ item.descricao }})</span>{% endif %}</li>
     {% endfor %}
 </ul>
-<h4>Itens encontrados em outro local</h4>
-<ul>
-    {% for item in itens if item.status == 'encontrado_erro_local' %}
-        <li>{{ item.tombo }} <span class="text-warning">(no banco: {{ item.local_banco }})</span></li>
-    {% endfor %}
-</ul>
-<h4>Itens desconhecidos</h4>
-<ul>
-    {% for item in itens if item.status == 'desconhecido' %}
-        <li class="text-danger">{{ item.tombo }}</li>
-    {% endfor %}
-</ul>
-<h4>Itens faltantes</h4>
-<ul>
-    {% for item in itens if item.status == 'faltante' %}
-        <li class="text-danger">{{ item.tombo }}</li>
-    {% endfor %}
-</ul>
+
+{% set encontrados_erro_local = itens|selectattr('status', 'equalto', 'encontrado_erro_local')|list %}
+{% if encontrados_erro_local %}
+<div class="alert alert-danger">
+    <h4>Inconsistência: Itens de outro local, mas foram encontrados no {{ levantamento.local }}</h4>
+</div>
+    <ul>
+        {% for item in encontrados_erro_local %}
+            <li>{{ item.tombo }} (local de origem: {{ item.local_banco }}){% if item.descricao %} <span class="text-muted">({{ item.descricao }})</span>{% endif %}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% set desconhecidos = itens|selectattr('status', 'equalto', 'desconhecido')|list %}
+{% if desconhecidos %}
+<div class="alert alert-danger">
+    <h4>Inconsistência: Itens encontrados no {{ levantamento.local }}, mas não pertencem ao {{ levantamento.local }} - Não foi possível definir a origem correta do bem.</h4>
+</div>    
+    <ul>
+        {% for item in desconhecidos %}
+            <li>{{ item.tombo }}{% if item.descricao %} <span class="text-muted">({{ item.descricao }})</span>{% endif %}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% set faltantes = itens|selectattr('status', 'equalto', 'faltante')|list %}
+{% if faltantes %}
+<div class="alert alert-danger">
+    <h4>Inconsistência: Não foram encontrados no {{ levantamento.local }}.</h4>
+</div>
+    <ul>
+        {% for item in faltantes %}
+            <li>{{ item.tombo }}{% if item.descricao %} <span class="text-muted">({{ item.descricao }})</span>{% endif %}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% set sem_etiqueta = itens|selectattr('status', 'equalto', 'sem_etiqueta')|list %}
+{% if sem_etiqueta %}
+<div class="alert alert-warning">
+    <h4>Itens sem etiqueta de número do tombo</h4>
+</div>
+    <ul>
+        {% for item in sem_etiqueta %}
+            <li>{{ item.descricao }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
 <a href="{{ url_for('patrimonio.levantamentos') }}" class="btn btn-secondary mt-3">Voltar ao histórico</a>
 {% endblock %} 

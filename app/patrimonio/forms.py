@@ -14,7 +14,7 @@ class FiltroItensForm(FlaskForm):
 
 class LevantamentoForm(FlaskForm):
     local = SelectField('Local', choices=[], validators=[DataRequired()])
-    responsavel = StringField('Responsável')
+    responsavel = StringField('Responsável', validators=[DataRequired()])
     tombos = TextAreaField('Tombos encontrados (um por linha ou separados por vírgula)', validators=[])
     csvfile = FileField('Importar CSV de tombos (cabeçalho: tombo,descricao)')
     submit = SubmitField('Processar levantamento') 

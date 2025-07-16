@@ -8,6 +8,7 @@ from .services import processar_pdf
 from .forms import UploadPDFForm, FiltroItensForm, LevantamentoForm
 import csv
 from io import StringIO, TextIOWrapper
+from zoneinfo import ZoneInfo
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -62,7 +63,8 @@ def upload():
                     'qtd_bens': resultado['qtd_bens'],
                     'qtd_itens': len(resultado['itens']),
                     'divergencia': resultado['divergencia'],
-                    'erro': resultado['erro']
+                    'erro': resultado['erro'],
+                    'itens': resultado['itens']  # Lista de tuplas (tombo, descricao, ...)
                 })
         flash('Processamento concluído!')
         return render_template('upload.html', logs=logs, form=form)
@@ -127,18 +129,28 @@ def levantamento():
         responsavel = form.responsavel.data
         tombos_lista = []
         descricoes_csv = {}
+        sem_etiqueta = []
         # Processar CSV se enviado
         if form.csvfile.data:
             file = form.csvfile.data
             stream = TextIOWrapper(file.stream, encoding='utf-8')
-            reader = csv.DictReader(stream)
+            reader = csv.reader(stream)
+            header = next(reader, None)  # Ignora o cabeçalho
             for row in reader:
-                t = row.get('tombo', '').strip()
-                d = row.get('descricao', '').strip()
-                if t:
-                    tombos_lista.append(t)
-                    if d:
-                        descricoes_csv[t] = d
+                if not row or len(row) < 2:
+                    continue
+                tombo = row[0].strip()
+                descricao = row[1].strip()
+                if tombo.isdigit():
+                    tombos_lista.append(tombo)
+                    if descricao:
+                        descricoes_csv[tombo] = descricao
+                else:
+                    # Item sem etiqueta de tombo
+                    sem_etiqueta.append(descricao or '(sem descrição)')
+            print('DEBUG - Tombos lidos do CSV:', tombos_lista)
+            print('DEBUG - Descrições lidas do CSV:', descricoes_csv)
+            print('DEBUG - Itens sem etiqueta:', sem_etiqueta)
         # Processar tombos do textarea (adiciona ao que veio do CSV)
         tombos_input = form.tombos.data.replace(',', '\n') if form.tombos.data else ''
         for t in [t.strip() for t in tombos_input.split('\n') if t.strip()]:
@@ -151,24 +163,26 @@ def levantamento():
         # Buscar todos os tombos do banco
         itens_banco_todos = ItemPatrimonio.query.filter(ItemPatrimonio.tombo.in_(tombos_set)).all()
         tombos_banco_todos = set(i.tombo for i in itens_banco_todos)
-        # a) Encontrados no local correto
-        encontrados_correto = [t for t in tombos_lista if t in tombos_banco_local]
-        # b) Encontrados em outro local
-        encontrados_erro_local = [t for t in tombos_lista if t in tombos_banco_todos and t not in tombos_banco_local]
-        # c) Desconhecidos
-        desconhecidos = [t for t in tombos_lista if t not in tombos_banco_todos]
-        # d) Faltantes
-        faltantes = [t for t in tombos_banco_local if t not in tombos_set]
         # Para mostrar o local real dos encontrados em outro local
-        local_erro_dict = {i.tombo: i.local for i in itens_banco_todos if i.tombo in encontrados_erro_local}
+        local_erro_dict = {i.tombo: i.local for i in itens_banco_todos if i.tombo in [t for t in tombos_lista if t in tombos_banco_todos and t not in tombos_banco_local]}
+        # a) Encontrados no local correto
+        encontrados_correto = [(t, next((i.descricao for i in itens_banco_local if i.tombo == t), '')) for t in tombos_lista if t in tombos_banco_local]
+        # b) Encontrados em outro local
+        encontrados_erro_local = [(t, local_erro_dict.get(t, ''), next((i.descricao for i in itens_banco_todos if i.tombo == t), '')) for t in tombos_lista if t in tombos_banco_todos and t not in tombos_banco_local]
+        # c) Desconhecidos
+        tombos_desconhecidos = [t for t in tombos_lista if t not in tombos_banco_todos]
+        desconhecidos = [(t, descricoes_csv.get(t, '')) for t in tombos_desconhecidos]
+        # d) Faltantes
+        faltantes = [(t, next((i.descricao for i in itens_banco_local if i.tombo == t), '')) for t in tombos_banco_local if t not in tombos_set]
         relatorio = {
             'local': local,
             'responsavel': responsavel,
             'encontrados_correto': encontrados_correto,
-            'encontrados_erro_local': [(t, local_erro_dict.get(t, '')) for t in encontrados_erro_local],
-            'desconhecidos': [(t, descricoes_csv.get(t, '')) for t in desconhecidos],
+            'encontrados_erro_local': encontrados_erro_local,
+            'desconhecidos': desconhecidos,
             'faltantes': faltantes,
-            'tombos_digitados': tombos_lista
+            'tombos_digitados': tombos_lista,
+            'sem_etiqueta': sem_etiqueta
         }
     return render_template('levantamento.html', form=form, relatorio=relatorio)
 
@@ -191,6 +205,7 @@ def salvar_levantamento():
             desconhecidos.append(parts[0])
             descricoes_desconhecidos.append(parts[1] if len(parts) > 1 else '')
     faltantes = request.form.get('faltantes', '').split(',') if request.form.get('faltantes') else []
+    sem_etiqueta = request.form.get('sem_etiqueta', '').split(';') if request.form.get('sem_etiqueta') else []
     # Cria levantamento
     levantamento = Levantamento(local=local, responsavel=responsavel)
     db.session.add(levantamento)
@@ -198,12 +213,16 @@ def salvar_levantamento():
     # Salva itens encontrados corretos
     for t in encontrados_correto:
         if t:
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='encontrado_correto', local_banco=local))
+            item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
+            descricao = item_banco.descricao if item_banco else None
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='encontrado_correto', local_banco=local, descricao=descricao))
     # Salva itens encontrados em outro local
     for idx, t in enumerate(encontrados_erro_local):
         if t:
             local_banco = encontrados_erro_local_locais[idx] if idx < len(encontrados_erro_local_locais) else ''
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='encontrado_erro_local', local_banco=local_banco))
+            item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local_banco).first()
+            descricao = item_banco.descricao if item_banco else None
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='encontrado_erro_local', local_banco=local_banco, descricao=descricao))
     # Salva desconhecidos
     for idx, t in enumerate(desconhecidos):
         if t:
@@ -212,7 +231,13 @@ def salvar_levantamento():
     # Salva faltantes
     for t in faltantes:
         if t:
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='faltante', local_banco=local))
+            item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
+            descricao = item_banco.descricao if item_banco else None
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, status='faltante', local_banco=local, descricao=descricao))
+    # Salva itens sem etiqueta
+    for desc in sem_etiqueta:
+        if desc.strip():
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo='', status='sem_etiqueta', local_banco=None, descricao=desc.strip()))
     db.session.commit()
     flash('Levantamento salvo com sucesso!')
     return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id))
@@ -220,10 +245,19 @@ def salvar_levantamento():
 @bp.route('/levantamentos')
 def levantamentos():
     lista = Levantamento.query.order_by(Levantamento.data.desc()).all()
+    for l in lista:
+        if l.data.tzinfo is None:
+            l.data = l.data.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('America/Sao_Paulo'))
+        else:
+            l.data = l.data.astimezone(ZoneInfo('America/Sao_Paulo'))
     return render_template('levantamentos.html', levantamentos=lista)
 
 @bp.route('/levantamento/<int:levantamento_id>')
 def levantamento_detalhe(levantamento_id):
     levantamento = Levantamento.query.get_or_404(levantamento_id)
+    if levantamento.data.tzinfo is None:
+        levantamento.data = levantamento.data.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('America/Sao_Paulo'))
+    else:
+        levantamento.data = levantamento.data.astimezone(ZoneInfo('America/Sao_Paulo'))
     itens = LevantamentoItem.query.filter_by(levantamento_id=levantamento.id).all()
     return render_template('levantamento_detalhe.html', levantamento=levantamento, itens=itens) 

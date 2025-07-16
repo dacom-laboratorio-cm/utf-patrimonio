@@ -28,37 +28,44 @@
     <p><strong>Local:</strong> {{ relatorio.local }}</p>
     <p><strong>Responsável:</strong> {{ relatorio.responsavel }}</p>
     <ul>
-        <li><strong>Itens encontrados no local correto:</strong> {{ relatorio.encontrados_correto|length }}</li>
-        <li><strong>Itens encontrados em outro local:</strong> {{ relatorio.encontrados_erro_local|length }}</li>
-        <li><strong>Itens desconhecidos:</strong> {{ relatorio.desconhecidos|length }}</li>
-        <li><strong>Itens faltantes:</strong> {{ relatorio.faltantes|length }}</li>
+        <li><strong>Bens sem inconsistência:</strong> {{ relatorio.encontrados_correto|length }}</li>
+        <li><strong>Inconsistência: Bens de outro local</strong> {{ relatorio.encontrados_erro_local|length }}</li>
+        <li><strong>Inconsistência: Bens de outro local, com origem desconhecida.</strong> {{ relatorio.desconhecidos|length }}</li>
+        <li><strong>Inconsistência: Bens não encontrados</strong> {{ relatorio.faltantes|length }}</li>
+        <li><strong>Inconsistência: Bens sem etiqueta de tombo</strong> {{ relatorio.sem_etiqueta|length }}</li>
     </ul>
     <div class="row">
         <div class="col-md-6">
-            <h5>Encontrados no local correto</h5>
+            <h5>Bens sem inconsistência:</h5>
             <ul>
-                {% for t in relatorio.encontrados_correto %}
-                    <li>{{ t }}</li>
+                {% for t, desc in relatorio.encontrados_correto %}
+                    <li>{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
                 {% endfor %}
             </ul>
-            <h5>Encontrados em outro local</h5>
+            <h5>Inconsistência: Bens de outro local</h5>
             <ul>
-                {% for t, local in relatorio.encontrados_erro_local %}
-                    <li>{{ t }} <span class="text-warning">(no banco: {{ local }})</span></li>
+                {% for t, local, desc in relatorio.encontrados_erro_local %}
+                    <li>{{ t }} <span class="text-warning">(no banco: {{ local }})</span>{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
                 {% endfor %}
             </ul>
         </div>
         <div class="col-md-6">
-            <h5>Desconhecidos</h5>
+            <h5>Inconsistência: Bens de outro local, com origem desconhecida</h5>
             <ul>
                 {% for t, desc in relatorio.desconhecidos %}
                     <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
                 {% endfor %}
             </ul>
-            <h5>Faltantes</h5>
+            <h5>Inconsistência: Bens sem etiqueta de tombo</h5>
             <ul>
-                {% for t in relatorio.faltantes %}
-                    <li class="text-danger">{{ t }}</li>
+                {% for desc in relatorio.sem_etiqueta %}
+                    <li class="text-warning">{{ desc }}</li>
+                {% endfor %}
+            </ul>
+            <h5>Inconsistência: Bens não encontrados</h5>
+            <ul>
+                {% for t, desc in relatorio.faltantes %}
+                    <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
                 {% endfor %}
             </ul>
         </div>
@@ -67,11 +74,12 @@
     <form method="post" action="/levantamento/salvar">
         <input type="hidden" name="local" value="{{ relatorio.local }}">
         <input type="hidden" name="responsavel" value="{{ relatorio.responsavel }}">
-        <input type="hidden" name="encontrados_correto" value="{{ relatorio.encontrados_correto|join(',') }}">
+        <input type="hidden" name="encontrados_correto" value="{{ relatorio.encontrados_correto|map(attribute=0)|join(',') }}">
         <input type="hidden" name="encontrados_erro_local" value="{{ relatorio.encontrados_erro_local|map(attribute=0)|join(',') }}">
         <input type="hidden" name="encontrados_erro_local_locais" value="{{ relatorio.encontrados_erro_local|map(attribute=1)|join(',') }}">
         <input type="hidden" name="desconhecidos" value="{% for t, desc in relatorio.desconhecidos %}{{ t }}|{{ desc }};{% endfor %}">
-        <input type="hidden" name="faltantes" value="{{ relatorio.faltantes|join(',') }}">
+        <input type="hidden" name="faltantes" value="{{ relatorio.faltantes|map(attribute=0)|join(',') }}">
+        <input type="hidden" name="sem_etiqueta" value="{% for desc in relatorio.sem_etiqueta %}{{ desc }};{% endfor %}">
         <button type="submit" class="btn btn-success mt-3">Salvar levantamento</button>
     </form>
 {% endif %}

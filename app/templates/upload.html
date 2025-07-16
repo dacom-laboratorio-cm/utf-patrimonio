@@ -26,6 +26,16 @@
                 {% if log.erro %}
                     <span class="text-danger">Erro: {{ log.erro }}</span>
                 {% endif %}
+                {% if log.itens %}
+                <details class="mt-2">
+                    <summary><strong>Itens extraídos:</strong> (clique para ver)</summary>
+                    <ul>
+                        {% for item in log.itens %}
+                            <li>{{ item[0] }} <span class="text-muted">({{ item[1] }})</span></li>
+                        {% endfor %}
+                    </ul>
+                </details>
+                {% endif %}
             </div>
         </div>
     {% endfor %}
