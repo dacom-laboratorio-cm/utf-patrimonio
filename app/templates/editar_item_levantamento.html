@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}Editar Item do Levantamento{% endblock %}
 {% block content %}
-<h2>Editar Item do Levantamento</h2>
-<form method="post">
+<main aria-labelledby="titulo-editar-item">
+<h2 id="titulo-editar-item">Editar Item do Levantamento</h2>
+<form method="post" autocomplete="off">
     <div class="mb-3">
         <label for="inconsistencia">Inconsistência:</label>
-        <select name="status" id="inconsistencia" class="form-control" required onchange="toggleLocalBanco()">
+        <select name="status" id="inconsistencia" class="form-control" required aria-label="Inconsistência do item" onchange="toggleLocalBanco()">
             <option value="ok" {% if item.inconsistencia == 'ok' %}selected{% endif %}>Encontrado no local correto</option>
             <option value="local_divergente" {% if item.inconsistencia == 'local_divergente' %}selected{% endif %}>Encontrado em outro local</option>
             <option value="local_divergente_desconhecida" {% if item.inconsistencia == 'local_divergente_desconhecida' %}selected{% endif %}>Local divergente (origem desconhecida)</option>
@@ -15,19 +16,20 @@
     </div>
     <div class="mb-3">
         <label for="tombo">Tombo:</label>
-        <input type="text" name="tombo" id="tombo" class="form-control" value="{{ item.tombo }}" maxlength="6" pattern="\d{6}" {% if item.inconsistencia != 'sem_etiqueta' %}required{% endif %} {% if item.inconsistencia == 'sem_etiqueta' %}disabled{% endif %}>
+        <input type="text" name="tombo" id="tombo" class="form-control" value="{{ item.tombo }}" maxlength="6" pattern="\d{6}" {% if item.inconsistencia != 'sem_etiqueta' %}required{% endif %} {% if item.inconsistencia == 'sem_etiqueta' %}disabled{% endif %} aria-label="Tombo do item">
     </div>
     <div class="mb-3" id="div-local-banco" style="display: none;">
         <label for="local_banco">Local de origem:</label>
-        <input type="text" name="local_banco" id="local_banco" class="form-control" value="{{ item.local_banco }}">
+        <input type="text" name="local_banco" id="local_banco" class="form-control" value="{{ item.local_banco }}" aria-label="Local de origem do item">
     </div>
     <div class="mb-3">
         <label for="descricao">Descrição:</label>
-        <input type="text" name="descricao" id="descricao" class="form-control" value="{{ item.descricao }}" required>
+        <input type="text" name="descricao" id="descricao" class="form-control" value="{{ item.descricao }}" required aria-label="Descrição do item">
     </div>
-    <button type="submit" class="btn btn-success">Salvar alterações</button>
-    <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id) }}" class="btn btn-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-success" aria-label="Salvar alterações do item">Salvar alterações</button>
+    <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id) }}" class="btn btn-secondary" aria-label="Cancelar edição">Cancelar</a>
 </form>
+</main>
 <script>
 function toggleLocalBanco() {
     var status = document.getElementById('inconsistencia').value;

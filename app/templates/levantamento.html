@@ -4,8 +4,10 @@
 <div class="d-flex justify-content-end mb-3">
     <a href="{{ url_for('patrimonio.levantamento_manual') }}" class="btn btn-secondary">Levantamento Manual</a>
 </div>
-<h2>Levantamento de Patrimônio</h2>
-<form method="post" enctype="multipart/form-data">
+<main aria-labelledby="titulo-levantamento">
+<h2 id="titulo-levantamento">Levantamento</h2>
+<section aria-labelledby="titulo-levantamento">
+  <form method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <div class="mb-3">
         {{ form.local.label(class="form-label") }}
@@ -24,57 +26,55 @@
         {{ form.csvfile(class="form-control") }}
     </div>
     {{ form.submit(class="btn btn-primary") }}
-</form>
+  </form>
 
-{% if relatorio %}
+  {% if relatorio %}
     <h3 class="mt-4">Relatório do Levantamento</h3>
-    <p><strong>Local:</strong> {{ relatorio.local }}</p>
-    <p><strong>Responsável:</strong> {{ relatorio.responsavel }}</p>
-    <ul>
+    <section aria-label="Resumo do levantamento">
+      <ul>
         <li><strong>Bens sem inconsistência:</strong> {{ relatorio.encontrados_correto|length }}</li>
         <li><strong>Inconsistência: Bens de outro local</strong> {{ relatorio.encontrados_erro_local|length }}</li>
         <li><strong>Inconsistência: Bens de outro local, com origem desconhecida</strong> {{ relatorio.desconhecidos|length }}</li>
         <li><strong>Inconsistência: Bens não encontrados</strong> {{ relatorio.faltantes|length }}</li>
         <li><strong>Inconsistência: Bens sem etiqueta de tombo</strong> {{ relatorio.sem_etiqueta|length }}</li>
-    </ul>
-    <div class="row">
+      </ul>
+      <div class="row">
         <div class="col-md-6">
-            <h5>Bens sem inconsistência:</h5>
-            <ul>
-                {% for t, desc in relatorio.encontrados_correto %}
-                    <li>{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
-                {% endfor %}
-            </ul>
-            <h5>Inconsistência: Bens de outro local</h5>
-            <ul>
-                {% for t, local, desc in relatorio.encontrados_erro_local %}
-                    <li>{{ t }} <span class="text-warning">(no banco: {{ local }})</span>{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
-                {% endfor %}
-            </ul>
+          <h5>Bens sem inconsistência:</h5>
+          <ul>
+            {% for t, desc in relatorio.encontrados_correto %}
+              <li>{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
+          <h5>Inconsistência: Bens de outro local</h5>
+          <ul>
+            {% for t, local, desc in relatorio.encontrados_erro_local %}
+              <li>{{ t }} <span class="text-warning">(no banco: {{ local }})</span>{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
         </div>
         <div class="col-md-6">
-            <h5>Inconsistência: Bens de outro local, com origem desconhecida</h5>
-            <ul>
-                {% for t, desc in relatorio.desconhecidos %}
-                    <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
-                {% endfor %}
-            </ul>
-            <h5>Inconsistência: Bens sem etiqueta de tombo</h5>
-            <ul>
-                {% for desc in relatorio.sem_etiqueta %}
-                    <li class="text-warning">{{ desc }}</li>
-                {% endfor %}
-            </ul>
-            <h5>Inconsistência: Bens não encontrados</h5>
-            <ul>
-                {% for t, desc in relatorio.faltantes %}
-                    <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
-                {% endfor %}
-            </ul>
+          <h5>Inconsistência: Bens de outro local, com origem desconhecida</h5>
+          <ul>
+            {% for t, desc in relatorio.desconhecidos %}
+              <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
+          <h5>Inconsistência: Bens sem etiqueta de tombo</h5>
+          <ul>
+            {% for desc in relatorio.sem_etiqueta %}
+              <li class="text-warning">{{ desc }}</li>
+            {% endfor %}
+          </ul>
+          <h5>Inconsistência: Bens não encontrados</h5>
+          <ul>
+            {% for t, desc in relatorio.faltantes %}
+              <li class="text-danger">{{ t }}{% if desc %} <span class="text-muted">({{ desc }})</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
         </div>
-    </div>
-    <!-- Botão para salvar levantamento pode ser adicionado aqui futuramente -->
-    <form method="post" action="/levantamento/salvar">
+      </div>
+      <form method="post" action="/levantamento/salvar">
         <input type="hidden" name="local" value="{{ relatorio.local }}">
         <input type="hidden" name="responsavel" value="{{ relatorio.responsavel }}">
         <input type="hidden" name="encontrados_correto" value="{{ relatorio.encontrados_correto|map(attribute=0)|join(',') }}">
@@ -83,7 +83,10 @@
         <input type="hidden" name="desconhecidos" value="{% for t, desc in relatorio.desconhecidos %}{{ t }}|{{ desc }};{% endfor %}">
         <input type="hidden" name="faltantes" value="{{ relatorio.faltantes|map(attribute=0)|join(',') }}">
         <input type="hidden" name="sem_etiqueta" value="{% for desc in relatorio.sem_etiqueta %}{{ desc }};{% endfor %}">
-        <button type="submit" class="btn btn-success mt-3">Salvar levantamento</button>
-    </form>
-{% endif %}
+        <button type="submit" class="btn btn-success mt-3" aria-label="Salvar levantamento">Salvar levantamento</button>
+      </form>
+    </section>
+  {% endif %}
+</section>
+</main>
 {% endblock %} 

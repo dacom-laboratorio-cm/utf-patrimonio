@@ -1,29 +1,36 @@
 {% extends 'base.html' %}
 {% block title %}Logs de Processamento{% endblock %}
 {% block content %}
-<h2>Logs de Processamento</h2>
-<table class="table table-bordered table-striped">
-    <thead>
+<main aria-labelledby="titulo-logs">
+<h2 id="titulo-logs">Logs de Processamento</h2>
+<section aria-labelledby="titulo-logs">
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped" aria-describedby="titulo-logs">
+      <caption class="visually-hidden">Logs de processamento</caption>
+      <thead>
         <tr>
-            <th>Arquivo</th>
-            <th>Responsável</th>
-            <th>Qtd. Bens (PDF)</th>
-            <th>Itens Extraídos</th>
-            <th>Divergência</th>
-            <th>Erro</th>
+          <th scope="col">Arquivo</th>
+          <th scope="col">Responsável</th>
+          <th scope="col">Qtd. Bens (PDF)</th>
+          <th scope="col">Itens Extraídos</th>
+          <th scope="col">Divergência</th>
+          <th scope="col">Erro</th>
         </tr>
-    </thead>
-    <tbody>
-    {% for log in logs %}
+      </thead>
+      <tbody>
+        {% for log in logs %}
         <tr>
-            <td>{{ log.arquivo_pdf }}</td>
-            <td>{{ log.responsavel }}</td>
-            <td>{{ log.qtd_bens_pdf }}</td>
-            <td>{{ log.qtd_itens_extraidos }}</td>
-            <td>{% if log.divergencia %}<span class="text-warning">Sim</span>{% else %}Não{% endif %}</td>
-            <td>{% if log.erro %}<span class="text-danger">{{ log.erro }}</span>{% endif %}</td>
+          <td>{{ log.arquivo_pdf }}</td>
+          <td>{{ log.responsavel }}</td>
+          <td>{{ log.qtd_bens_pdf }}</td>
+          <td>{{ log.qtd_itens_extraidos }}</td>
+          <td>{% if log.divergencia %}<span class="text-warning">Sim</span>{% else %}Não{% endif %}</td>
+          <td>{% if log.erro %}<span class="text-danger">{{ log.erro }}</span>{% endif %}</td>
         </tr>
-    {% endfor %}
-    </tbody>
-</table>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+</main>
 {% endblock %} 

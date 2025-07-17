@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Novo Levantamento Manual</h2>
+<main aria-labelledby="titulo-levantamento-manual">
+<h2 id="titulo-levantamento-manual">Levantamento Manual</h2>
 <form method="post" id="form-levantamento-manual">
     <div class="mb-3">
         <label for="local">Local:</label>
@@ -67,31 +68,36 @@ window.onload = function() {
 
 {% if itens %}
     <h4 class="mt-4">Itens adicionados</h4>
-    <table class="table table-bordered mt-2">
+    <div class="table-responsive">
+      <table class="table table-bordered mt-2" aria-label="Itens adicionados no levantamento manual">
+        <caption class="visually-hidden">Itens adicionados</caption>
         <thead>
-            <tr>
-                <th>Tombo</th>
-                <th>Descrição</th>
-                <th>Ações</th>
-            </tr>
+          <tr>
+            <th scope="col">Tombo</th>
+            <th scope="col">Descrição</th>
+            <th scope="col">Ações</th>
+          </tr>
         </thead>
         <tbody>
-            {% for item in itens %}
-            <tr>
-                <td>{% if not item.tombo %}sem etiqueta{% else %}{{ item.tombo }}{% endif %}</td>
-                <td>{{ item.descricao }}</td>
-                <td>
-                    <a href="{{ url_for('patrimonio.levantamento_manual', editar=loop.index0) }}" class="btn btn-sm btn-warning">Editar</a>
-                    <a href="{{ url_for('patrimonio.levantamento_manual', remover=loop.index0) }}" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');">Remover</a>
-                </td>
-            </tr>
-            {% endfor %}
+          {% for item in itens %}
+          <tr>
+            <td>{% if not item.tombo %}sem etiqueta{% else %}{{ item.tombo }}{% endif %}</td>
+            <td>{{ item.descricao }}</td>
+            <td>
+              <a href="{{ url_for('patrimonio.levantamento_manual', editar=loop.index0) }}" class="btn btn-sm btn-warning" aria-label="Editar item {{ loop.index }}">Editar</a>
+              <a href="{{ url_for('patrimonio.levantamento_manual', remover=loop.index0) }}" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');" aria-label="Remover item {{ loop.index }}">Remover</a>
+            </td>
+          </tr>
+          {% endfor %}
         </tbody>
-    </table>
+      </table>
+    </div>
     <form method="post">
-        <input type="hidden" name="local" value="{{ local_manual }}">
-        <input type="hidden" name="responsavel" value="{{ responsavel_manual }}">
-        <button type="submit" name="salvar" class="btn btn-success">Salvar levantamento</button>
+      <input type="hidden" name="local" value="{{ local_manual }}">
+      <input type="hidden" name="responsavel" value="{{ responsavel_manual }}">
+      <button type="submit" name="salvar" class="btn btn-success" aria-label="Salvar levantamento manual">Salvar levantamento</button>
     </form>
 {% endif %}
+</section>
+</main>
 {% endblock %} 

@@ -1,36 +1,41 @@
 {% extends 'base.html' %}
 {% block title %}Levantamentos{% endblock %}
 {% block content %}
-<h2>Levantamentos</h2>
-<div class="mb-3 text-end">
+<h2 id="titulo-levantamentos">Levantamentos</h2>
+<section aria-labelledby="titulo-levantamentos">
+  <div class="mb-3 text-end">
     <a href="{{ url_for('patrimonio.levantamento') }}" class="btn btn-success">Novo levantamento</a>
-</div>
-<table class="table table-bordered">
-    <thead>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered" aria-describedby="titulo-levantamentos">
+      <caption class="visually-hidden">Lista de levantamentos</caption>
+      <thead>
         <tr>
-            <th>ID</th>
-            <th>Local</th>
-            <th>Responsável</th>
-            <th>Data</th>
-            <th>Ações</th>
+          <th scope="col">ID</th>
+          <th scope="col">Local</th>
+          <th scope="col">Responsável</th>
+          <th scope="col">Data</th>
+          <th scope="col">Ações</th>
         </tr>
-    </thead>
-    <tbody>
+      </thead>
+      <tbody>
         {% for l in levantamentos %}
         <tr>
-            <td>{{ l.id }}</td>
-            <td>{{ l.local }}</td>
-            <td>{{ l.responsavel }}</td>
-            <td>{{ l.data.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td>
-                <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=l.id) }}" class="btn btn-sm btn-info">Ver</a>
-                <a href="{{ url_for('patrimonio.editar_levantamento', levantamento_id=l.id) }}" class="btn btn-sm btn-warning">Editar</a>
-                <form method="post" action="{{ url_for('patrimonio.remover_levantamento', levantamento_id=l.id) }}" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover este levantamento?');">Remover</button>
-                </form>
-            </td>
+          <td>{{ l.id }}</td>
+          <td>{{ l.local }}</td>
+          <td>{{ l.responsavel }}</td>
+          <td>{{ l.data.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>
+            <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=l.id) }}" class="btn btn-sm btn-info" aria-label="Ver levantamento {{ l.id }}">Ver</a>
+            <a href="{{ url_for('patrimonio.editar_levantamento', levantamento_id=l.id) }}" class="btn btn-sm btn-warning" aria-label="Editar levantamento {{ l.id }}">Editar</a>
+            <form method="post" action="{{ url_for('patrimonio.remover_levantamento', levantamento_id=l.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover este levantamento?');" aria-label="Remover levantamento {{ l.id }}">Remover</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
-    </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+</section>
 {% endblock %} 

@@ -7,40 +7,45 @@
 <p><strong>Responsável:</strong> {{ levantamento.responsavel }}</p>
 <p><strong>Data:</strong> {{ levantamento.data.strftime('%d/%m/%Y %H:%M') }}</p>
 
-<h4>Itens do Levantamento</h4>
-<table class="table table-bordered table-striped">
-    <thead>
+<h4 id="itens-levantamento">Itens do Levantamento</h4>
+<section aria-labelledby="itens-levantamento">
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped" aria-describedby="itens-levantamento">
+      <caption class="visually-hidden">Itens do levantamento</caption>
+      <thead>
         <tr>
-            <th><a href="?sort=tombo&direction={% if sort == 'tombo' and direction == 'asc' %}desc{% else %}asc{% endif %}">Tombo</a></th>
-            <th><a href="?sort=descricao&direction={% if sort == 'descricao' and direction == 'asc' %}desc{% else %}asc{% endif %}">Descrição</a></th>
-            <th><a href="?sort=inconsistencia&direction={% if sort == 'inconsistencia' and direction == 'asc' %}desc{% else %}asc{% endif %}">Inconsistência</a></th>
-            <th><a href="?sort=local_banco&direction={% if sort == 'local_banco' and direction == 'asc' %}desc{% else %}asc{% endif %}">Local de Origem</a></th>
-            <th>Ações</th>
+          <th scope="col"><a href="?sort=tombo&direction={% if sort == 'tombo' and direction == 'asc' %}desc{% else %}asc{% endif %}">Tombo</a></th>
+          <th scope="col"><a href="?sort=descricao&direction={% if sort == 'descricao' and direction == 'asc' %}desc{% else %}asc{% endif %}">Descrição</a></th>
+          <th scope="col"><a href="?sort=inconsistencia&direction={% if sort == 'inconsistencia' and direction == 'asc' %}desc{% else %}asc{% endif %}">Inconsistência</a></th>
+          <th scope="col"><a href="?sort=local_banco&direction={% if sort == 'local_banco' and direction == 'asc' %}desc{% else %}asc{% endif %}">Local de Origem</a></th>
+          <th scope="col">Ações</th>
         </tr>
-    </thead>
-    <tbody>
+      </thead>
+      <tbody>
         {% for item in itens %}
         <tr>
-            <td>{% if item.inconsistencia == 'sem_etiqueta' %}sem etiqueta{% else %}{{ item.tombo }}{% endif %}</td>
-            <td>{{ item.descricao }}</td>
-            <td>
-                {% if item.inconsistencia == 'ok' %}Sem inconsistência
-                {% elif item.inconsistencia == 'local_divergente' %}Local divergente
-                {% elif item.inconsistencia == 'local_divergente_desconhecida' %}Local divergente (origem desconhecida)
-                {% elif item.inconsistencia == 'nao_encontrado' %}Não encontrado
-                {% elif item.inconsistencia == 'sem_etiqueta' %}Sem etiqueta
-                {% else %}{{ item.inconsistencia }}{% endif %}
-            </td>
-            <td>{% if item.inconsistencia == 'local_divergente' %}{{ item.local_banco }}{% else %}-{% endif %}</td>
-            <td>
-                <a href="{{ url_for('patrimonio.editar_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" class="btn btn-sm btn-warning">Editar</a>
-                <form method="post" action="{{ url_for('patrimonio.remover_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');">Remover</button>
-                </form>
-            </td>
+          <td>{% if item.inconsistencia == 'sem_etiqueta' %}sem etiqueta{% else %}{{ item.tombo }}{% endif %}</td>
+          <td>{{ item.descricao }}</td>
+          <td>
+            {% if item.inconsistencia == 'ok' %}Sem inconsistência
+            {% elif item.inconsistencia == 'local_divergente' %}Local divergente
+            {% elif item.inconsistencia == 'local_divergente_desconhecida' %}Local divergente (origem desconhecida)
+            {% elif item.inconsistencia == 'nao_encontrado' %}Não encontrado
+            {% elif item.inconsistencia == 'sem_etiqueta' %}Sem etiqueta
+            {% else %}{{ item.inconsistencia }}{% endif %}
+          </td>
+          <td>{% if item.inconsistencia == 'local_divergente' %}{{ item.local_banco }}{% else %}-{% endif %}</td>
+          <td>
+            <a href="{{ url_for('patrimonio.editar_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" class="btn btn-sm btn-warning" aria-label="Editar item {{ item.tombo }}">Editar</a>
+            <form method="post" action="{{ url_for('patrimonio.remover_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');" aria-label="Remover item {{ item.tombo }}">Remover</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
-    </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+</section>
 <a href="{{ url_for('patrimonio.levantamentos') }}" class="btn btn-secondary mt-3">Voltar ao histórico</a>
 {% endblock %} 

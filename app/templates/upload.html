@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}Importar PDFs{% endblock %}
 {% block content %}
-<h2>Importar PDFs</h2>
-<form method="post" enctype="multipart/form-data">
+<main aria-labelledby="titulo-upload">
+<h2 id="titulo-upload">Importar PDFs</h2>
+<section aria-labelledby="titulo-upload">
+<form method="post" enctype="multipart/form-data" aria-label="Formulário de importação de PDFs">
     {{ form.hidden_tag() }}
     <div class="mb-3">
         {{ form.pdfs.label(class="form-label") }}
@@ -40,4 +42,6 @@
         </div>
     {% endfor %}
 {% endif %}
+</section>
+</main>
 {% endblock %} 
