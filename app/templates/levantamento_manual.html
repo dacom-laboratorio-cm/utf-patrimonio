@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Novo Levantamento Manual</h2>
+<form method="post" id="form-levantamento-manual">
+    <div class="mb-3">
+        <label for="local">Local:</label>
+        <select name="local" id="local" class="form-control" required {% if itens %}readonly disabled{% endif %}>
+            <option value="">Selecione o local</option>
+            {% for l in locais %}
+                <option value="{{ l }}" {% if (local_manual == l) or (request.form.local == l) %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+        </select>
+        {% if itens %}
+            <input type="hidden" name="local" value="{{ local_manual }}">
+        {% endif %}
+    </div>
+    <div class="mb-3">
+        <label for="responsavel">Responsável:</label>
+        <input type="text" name="responsavel" id="responsavel" class="form-control" value="{{ responsavel_manual or '' }}" required {% if itens %}readonly{% endif %}>
+    </div>
+    <div class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label for="tombo">Tombo:</label>
+            <input type="text" name="tombo" id="tombo" class="form-control" autocomplete="off" value="{{ item_editar.tombo if item_editar else '' }}" maxlength="6" pattern="\d{6}" {% if not item_editar or not item_editar.tombo %}required{% endif %}>
+        </div>
+        <div class="col-auto">
+            <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" value="1" id="sem_etiqueta" name="sem_etiqueta" onchange="toggleTombo()" {% if item_editar and not item_editar.tombo %}checked{% endif %}>
+                <label class="form-check-label" for="sem_etiqueta">Sem etiqueta</label>
+            </div>
+        </div>
+        <div class="col-auto">
+            <label for="descricao">Descrição:</label>
+            <input type="text" name="descricao" id="descricao" class="form-control" autocomplete="off" value="{{ item_editar.descricao if item_editar else ultimo_descricao }}" required>
+        </div>
+        <div class="col-auto">
+            <input type="hidden" name="editando_idx" value="{{ editando_idx if item_editar else '' }}">
+            <button type="submit" name="add_item" class="btn btn-primary">{{ 'Salvar edição' if item_editar else 'Adicionar item' }}</button>
+            {% if item_editar %}
+                <a href="{{ url_for('patrimonio.levantamento_manual') }}" class="btn btn-secondary">Cancelar</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-text mt-1">Informe o número de tombo (6 dígitos) ou marque "Sem etiqueta" para itens sem número.</div>
+</form>
+<script>
+function toggleTombo() {
+    var cb = document.getElementById('sem_etiqueta');
+    var tombo = document.getElementById('tombo');
+    if (cb.checked) {
+        tombo.value = '';
+        tombo.disabled = true;
+        tombo.removeAttribute('required');
+    } else {
+        tombo.disabled = false;
+        tombo.setAttribute('required', 'required');
+    }
+}
+window.onload = function() {
+    toggleTombo();
+};
+</script>
+
+{% if mensagem %}
+<div class="alert alert-warning mt-3">{{ mensagem }}</div>
+{% endif %}
+
+{% if itens %}
+    <h4 class="mt-4">Itens adicionados</h4>
+    <table class="table table-bordered mt-2">
+        <thead>
+            <tr>
+                <th>Tombo</th>
+                <th>Descrição</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <td>{% if not item.tombo %}sem etiqueta{% else %}{{ item.tombo }}{% endif %}</td>
+                <td>{{ item.descricao }}</td>
+                <td>
+                    <a href="{{ url_for('patrimonio.levantamento_manual', editar=loop.index0) }}" class="btn btn-sm btn-warning">Editar</a>
+                    <a href="{{ url_for('patrimonio.levantamento_manual', remover=loop.index0) }}" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');">Remover</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <form method="post">
+        <input type="hidden" name="local" value="{{ local_manual }}">
+        <input type="hidden" name="responsavel" value="{{ responsavel_manual }}">
+        <button type="submit" name="salvar" class="btn btn-success">Salvar levantamento</button>
+    </form>
+{% endif %}
+{% endblock %} 

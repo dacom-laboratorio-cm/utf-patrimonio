@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    container_name: flask_app
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=run.py
+    volumes:
+      - .:/app 

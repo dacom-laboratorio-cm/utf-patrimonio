@@ -1,0 +1,13 @@
+---
+description: inconsistencia
+globs:
+alwaysApply: false
+---
+
+# Descrição detalhada da regra
+A inconsisten de um item do levantamento pode ser:
+    - item.inconsistencia == 'ok': item está correto, sem inconsistência.
+    - item.inconsistencia == 'local_divergente': item encontrado, porém o local diverge do cadastro do banco de dados.
+    - item.inconsistencia == 'local_divergente_desconhecida': item encontrado, mas não foi possível definir a origem a partir dos dados de localização do banco.
+    - item.inconsistencia == 'nao_encontrado': item não foi visto no levantamento.
+    - item.inconsistencia == 'sem_etiqueta': item sem etiqueta, não foi possível obter dados do sistema.

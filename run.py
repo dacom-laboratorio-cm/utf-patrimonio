@@ -15,4 +15,4 @@ if __name__ == '__main__':
     app.logger.addHandler(file_handler)
     app.logger.setLevel(logging.INFO)
     app.logger.info('Aplicação iniciada')
-    app.run(debug=True) 
+    app.run(debug=True, port=5001) 

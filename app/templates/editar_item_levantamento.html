@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Editar Item do Levantamento{% endblock %}
+{% block content %}
+<h2>Editar Item do Levantamento</h2>
+<form method="post">
+    <div class="mb-3">
+        <label for="inconsistencia">Inconsistência:</label>
+        <select name="status" id="inconsistencia" class="form-control" required onchange="toggleLocalBanco()">
+            <option value="ok" {% if item.inconsistencia == 'ok' %}selected{% endif %}>Encontrado no local correto</option>
+            <option value="local_divergente" {% if item.inconsistencia == 'local_divergente' %}selected{% endif %}>Encontrado em outro local</option>
+            <option value="local_divergente_desconhecida" {% if item.inconsistencia == 'local_divergente_desconhecida' %}selected{% endif %}>Local divergente (origem desconhecida)</option>
+            <option value="nao_encontrado" {% if item.inconsistencia == 'nao_encontrado' %}selected{% endif %}>Não encontrado</option>
+            <option value="sem_etiqueta" {% if item.inconsistencia == 'sem_etiqueta' %}selected{% endif %}>Sem etiqueta</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="tombo">Tombo:</label>
+        <input type="text" name="tombo" id="tombo" class="form-control" value="{{ item.tombo }}" maxlength="6" pattern="\d{6}" {% if item.inconsistencia != 'sem_etiqueta' %}required{% endif %} {% if item.inconsistencia == 'sem_etiqueta' %}disabled{% endif %}>
+    </div>
+    <div class="mb-3" id="div-local-banco" style="display: none;">
+        <label for="local_banco">Local de origem:</label>
+        <input type="text" name="local_banco" id="local_banco" class="form-control" value="{{ item.local_banco }}">
+    </div>
+    <div class="mb-3">
+        <label for="descricao">Descrição:</label>
+        <input type="text" name="descricao" id="descricao" class="form-control" value="{{ item.descricao }}" required>
+    </div>
+    <button type="submit" class="btn btn-success">Salvar alterações</button>
+    <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id) }}" class="btn btn-secondary">Cancelar</a>
+</form>
+<script>
+function toggleLocalBanco() {
+    var status = document.getElementById('inconsistencia').value;
+    var divLocal = document.getElementById('div-local-banco');
+    var tombo = document.getElementById('tombo');
+    if (status === 'local_divergente' || status === 'local_divergente_desconhecida') {
+        divLocal.style.display = '';
+    } else {
+        divLocal.style.display = 'none';
+    }
+    if (status === 'sem_etiqueta') {
+        tombo.value = '';
+        tombo.disabled = true;
+        tombo.removeAttribute('required');
+    } else {
+        tombo.disabled = false;
+        tombo.setAttribute('required', 'required');
+    }
+}
+window.onload = function() {
+    toggleLocalBanco();
+};
+</script>
+{% endblock %} 

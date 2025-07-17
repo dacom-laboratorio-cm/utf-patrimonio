@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Editar Levantamento{% endblock %}
+{% block content %}
+<h2>Editar Levantamento</h2>
+<form method="post">
+    <div class="mb-3">
+        <label for="local">Local:</label>
+        <input type="text" name="local" id="local" class="form-control" value="{{ levantamento.local }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="responsavel">Responsável:</label>
+        <input type="text" name="responsavel" id="responsavel" class="form-control" value="{{ levantamento.responsavel }}" required>
+    </div>
+    <button type="submit" class="btn btn-success">Salvar alterações</button>
+    <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id) }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %} 
