@@ -122,6 +122,49 @@ utf-patrimonio/
 
 ---
 
+## Diagrama do Banco de Dados
+
+```mermaid
+erDiagram
+    ItemPatrimonio {
+        Integer id PK
+        String tombo
+        Text descricao
+        String valor
+        String termo_data
+        String local
+        String responsavel
+        String arquivo_pdf
+    }
+    LogProcessamento {
+        Integer id PK
+        String arquivo_pdf
+        String responsavel
+        Integer qtd_bens_pdf
+        Integer qtd_itens_extraidos
+        Boolean divergencia
+        Text erro
+    }
+    Levantamento {
+        Integer id PK
+        String local
+        DateTime data
+        String responsavel
+    }
+    LevantamentoItem {
+        Integer id PK
+        Integer levantamento_id FK
+        String tombo
+        String inconsistencia
+        String local_banco
+        Text descricao
+    }
+    Levantamento ||--o{ LevantamentoItem : "possui"
+    LevantamentoItem }o--|| Levantamento : "pertence a"
+```
+
+---
+
 ## Observações
 - O sistema utiliza SQLite por padrão, mas pode ser adaptado para outros bancos.
 - O upload de PDFs e o processamento dependem do layout dos arquivos.
