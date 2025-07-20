@@ -36,7 +36,9 @@ class Levantamento(db.Model):
 class LevantamentoItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     levantamento_id = db.Column(db.Integer, db.ForeignKey('levantamento.id'))
-    tombo = db.Column(db.String(32), nullable=False)
+    item_patrimonio_id = db.Column(db.Integer, db.ForeignKey('item_patrimonio.id'), nullable=True)
     inconsistencia = db.Column(db.String(32))  # 'ok', 'local_divergente', 'local_divergente_desconhecida', 'faltante', 'sem_etiqueta'
     local_banco = db.Column(db.String(32))  # Local cadastrado no banco (se houver)
-    descricao = db.Column(db.Text)  # Descrição do item desconhecido (se fornecida) 
+    descricao = db.Column(db.Text)  # Descrição do item desconhecido (se fornecida)
+
+    item_patrimonio = db.relationship('ItemPatrimonio', backref='levantamento_itens') 

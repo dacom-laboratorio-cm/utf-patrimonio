@@ -24,7 +24,7 @@
       <tbody>
         {% for item in itens %}
         <tr>
-          <td>{% if item.inconsistencia == 'sem_etiqueta' %}sem etiqueta{% else %}{{ item.tombo }}{% endif %}</td>
+          <td>{% if item.item_patrimonio %}{{ item.item_patrimonio.tombo }}{% else %}sem etiqueta{% endif %}</td>
           <td>{{ item.descricao }}</td>
           <td>
             {% if item.inconsistencia == 'ok' %}Sem inconsistência
@@ -36,9 +36,9 @@
           </td>
           <td>{% if item.inconsistencia == 'local_divergente' %}{{ item.local_banco }}{% else %}-{% endif %}</td>
           <td>
-            <a href="{{ url_for('patrimonio.editar_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" class="btn btn-sm btn-warning" aria-label="Editar item {{ item.tombo }}">Editar</a>
+            <a href="{{ url_for('patrimonio.editar_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" class="btn btn-sm btn-warning" aria-label="Editar item">Editar</a>
             <form method="post" action="{{ url_for('patrimonio.remover_item_levantamento', levantamento_id=levantamento.id, item_id=item.id) }}" style="display:inline;">
-              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');" aria-label="Remover item {{ item.tombo }}">Remover</button>
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');" aria-label="Remover item">Remover</button>
             </form>
           </td>
         </tr>

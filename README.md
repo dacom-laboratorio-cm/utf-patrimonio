@@ -154,13 +154,15 @@ erDiagram
     LevantamentoItem {
         Integer id PK
         Integer levantamento_id FK
-        String tombo
+        Integer item_patrimonio_id FK (opcional)
         String inconsistencia
         String local_banco
         Text descricao
     }
     Levantamento ||--o{ LevantamentoItem : "possui"
     LevantamentoItem }o--|| Levantamento : "pertence a"
+    ItemPatrimonio |o--o{ LevantamentoItem : "referenciado por (opcional)"
+    LevantamentoItem }o--o| ItemPatrimonio : "referencia (opcional)"
 ```
 
 ---

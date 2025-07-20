@@ -214,30 +214,46 @@ def salvar_levantamento():
     for t in encontrados_correto:
         if t:
             item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
-            descricao = item_banco.descricao if item_banco else None
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, inconsistencia='ok', local_banco=local, descricao=descricao))
+            if not item_banco:
+                # Cria o item se não existir
+                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', arquivo_pdf='')
+                db.session.add(item_banco)
+                db.session.flush()
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='ok', local_banco=local, descricao=item_banco.descricao))
     # Salva itens encontrados em outro local
     for idx, t in enumerate(encontrados_erro_local):
         if t:
             local_banco = encontrados_erro_local_locais[idx] if idx < len(encontrados_erro_local_locais) else ''
             item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local_banco).first()
-            descricao = item_banco.descricao if item_banco else None
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, inconsistencia='local_divergente', local_banco=local_banco, descricao=descricao))
+            if not item_banco:
+                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local_banco, responsavel='', arquivo_pdf='')
+                db.session.add(item_banco)
+                db.session.flush()
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente', local_banco=local_banco, descricao=item_banco.descricao))
     # Salva desconhecidos
     for idx, t in enumerate(desconhecidos):
         if t:
             descricao = descricoes_desconhecidos[idx] if idx < len(descricoes_desconhecidos) else ''
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
+            item_banco = ItemPatrimonio.query.filter_by(tombo=t).first()
+            if not item_banco:
+                item_banco = ItemPatrimonio(tombo=t, descricao=descricao, valor='0', termo_data='', local='', responsavel='', arquivo_pdf='')
+                db.session.add(item_banco)
+                db.session.flush()
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
     # Salva faltantes
     for t in faltantes:
         if t:
             item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
-            descricao = item_banco.descricao if item_banco else None
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, inconsistencia='nao_encontrado', local_banco=local, descricao=descricao))
+            if not item_banco:
+                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', arquivo_pdf='')
+                db.session.add(item_banco)
+                db.session.flush()
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='nao_encontrado', local_banco=local, descricao=item_banco.descricao))
     # Salva itens sem etiqueta
     for desc in sem_etiqueta:
         if desc.strip():
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo='', inconsistencia='sem_etiqueta', local_banco=None, descricao=desc.strip()))
+            # Para itens sem etiqueta, não há tombo, então não cria ItemPatrimonio
+            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=None, inconsistencia='sem_etiqueta', local_banco=None, descricao=desc.strip()))
     db.session.commit()
     flash('Levantamento salvo com sucesso!')
     return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id))
@@ -395,7 +411,7 @@ def levantamento_detalhe(levantamento_id):
     sort = request.args.get('sort', 'id')
     direction = request.args.get('direction', 'asc')
     sort_fields = {
-        'tombo': LevantamentoItem.tombo,
+        # 'tombo': LevantamentoItem.tombo,  # Removido pois não existe mais
         'descricao': LevantamentoItem.descricao,
         'inconsistencia': LevantamentoItem.inconsistencia,
         'local_banco': LevantamentoItem.local_banco,

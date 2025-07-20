@@ -16,7 +16,7 @@
     </div>
     <div class="mb-3">
         <label for="tombo">Tombo:</label>
-        <input type="text" name="tombo" id="tombo" class="form-control" value="{{ item.tombo }}" maxlength="6" pattern="\d{6}" {% if item.inconsistencia != 'sem_etiqueta' %}required{% endif %} {% if item.inconsistencia == 'sem_etiqueta' %}disabled{% endif %} aria-label="Tombo do item">
+        <input type="text" name="tombo" id="tombo" class="form-control" value="{{ item.item_patrimonio.tombo if item.item_patrimonio else '' }}" maxlength="6" pattern="\d{6}" {% if item.inconsistencia != 'sem_etiqueta' %}required{% endif %} {% if item.inconsistencia == 'sem_etiqueta' %}disabled{% endif %} aria-label="Tombo do item">
     </div>
     <div class="mb-3" id="div-local-banco" style="display: none;">
         <label for="local_banco">Local de origem:</label>
