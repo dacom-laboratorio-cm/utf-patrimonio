@@ -2,10 +2,10 @@
 {% block title %}Detalhe da Conferência Patrimonial{% endblock %}
 {% block content %}
 <h2>Detalhe da Conferência Patrimonial</h2>
-<p><strong>ID:</strong> {{ conferencia.id }}</p>
-<p><strong>Local:</strong> {{ conferencia.local }}</p>
-<p><strong>Responsável:</strong> {{ conferencia.responsavel }}</p>
-<p><strong>Data:</strong> {{ conferencia.data.strftime('%d/%m/%Y %H:%M') }}</p>
+<p><strong>ID:</strong> {{ conferencia_patrimonial.id }}</p>
+<p><strong>Local:</strong> {{ conferencia_patrimonial.local }}</p>
+<p><strong>Responsável:</strong> {{ conferencia_patrimonial.responsavel }}</p>
+<p><strong>Data:</strong> {{ conferencia_patrimonial.data.strftime('%d/%m/%Y %H:%M') }}</p>
 
 <h4 id="itens-conferencia">Itens da Conferência</h4>
 <section aria-labelledby="itens-conferencia">
@@ -36,8 +36,8 @@
           </td>
           <td>{% if item.inconsistencia == 'local_divergente' %}{{ item.local_banco }}{% else %}-{% endif %}</td>
           <td>
-            <a href="{{ url_for('patrimonio.editar_item_conferencia', conferencia_id=conferencia.id, item_id=item.id) }}" class="btn btn-sm btn-warning" aria-label="Editar item">Editar</a>
-            <form method="post" action="{{ url_for('patrimonio.remover_item_conferencia', conferencia_id=conferencia.id, item_id=item.id) }}" style="display:inline;">
+            <a href="{{ url_for('patrimonio.editar_item_conferencia_patrimonial', conferencia_patrimonial_id=conferencia_patrimonial.id, item_id=item.id) }}" class="btn btn-sm btn-warning" aria-label="Editar item">Editar</a>
+            <form method="post" action="{{ url_for('patrimonio.remover_item_conferencia_patrimonial', conferencia_patrimonial_id=conferencia_patrimonial.id, item_id=item.id) }}" style="display:inline;">
               <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remover este item?');" aria-label="Remover item">Remover</button>
             </form>
           </td>

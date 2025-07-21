@@ -237,7 +237,7 @@ def salvar_conferencia_patrimonial():
                 item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='ok', local_banco=local, descricao=item_banco.descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='ok', local_banco=local, descricao=item_banco.descricao))
     # Salva itens encontrados em outro local
     for idx, t in enumerate(encontrados_erro_local):
         if t:
@@ -247,7 +247,7 @@ def salvar_conferencia_patrimonial():
                 item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local_banco, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente', local_banco=local_banco, descricao=item_banco.descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente', local_banco=local_banco, descricao=item_banco.descricao))
     # Salva desconhecidos
     for idx, t in enumerate(desconhecidos):
         if t:
@@ -257,7 +257,7 @@ def salvar_conferencia_patrimonial():
                 item_banco = ItemPatrimonio(tombo=t, descricao=descricao, valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
     # Salva faltantes
     for t in faltantes:
         if t:
@@ -266,12 +266,12 @@ def salvar_conferencia_patrimonial():
                 item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='nao_encontrado', local_banco=local, descricao=item_banco.descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='nao_encontrado', local_banco=local, descricao=item_banco.descricao))
     # Salva itens sem etiqueta
     for desc in sem_etiqueta:
         if desc.strip():
             # Para itens sem etiqueta, não há tombo, então não cria ItemPatrimonio
-            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=None, inconsistencia='sem_etiqueta', local_banco=None, descricao=desc.strip()))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, item_patrimonio_id=None, inconsistencia='sem_etiqueta', local_banco=None, descricao=desc.strip()))
     db.session.commit()
     flash('Conferencia Patrimonial salva com sucesso!')
     return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id))
@@ -383,20 +383,20 @@ def conferencia_patrimonial_manual():
                 db.session.commit()
                 # Salva encontrados corretos
                 for t, descricao in encontrados_correto:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='ok', local_banco=local))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='ok', local_banco=local))
                 # Salva encontrados em outro local
                 for t, local_banco, descricao in encontrados_erro_local:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente', local_banco=local_banco))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente', local_banco=local_banco))
                 # Salva desconhecidos
                 for t, descricao in desconhecidos:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente_desconhecida', local_banco=None))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente_desconhecida', local_banco=None))
                 # Salva faltantes
                 for t, descricao in faltantes:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='nao_encontrado', local_banco=local))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='nao_encontrado', local_banco=local))
                 # Salva itens sem etiqueta
                 for desc in sem_etiqueta:
                     if desc.strip():
-                        db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo='', descricao=desc.strip(), inconsistencia='sem_etiqueta', local_banco=None))
+                        db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo='', descricao=desc.strip(), inconsistencia='sem_etiqueta', local_banco=None))
                 db.session.commit()
                 session.pop('itens')
                 session.pop('local_manual')
@@ -449,7 +449,7 @@ def conferencia_patrimonial_detalhe(conferencia_patrimonial_id):
         'id': ConferenciaPatrimonialItem.id
     }
     sort_col = sort_fields.get(sort, ConferenciaPatrimonialItem.id)
-    query = ConferenciaPatrimonialItem.query.filter_by(conferencia_patrimonial_id=conferencia_patrimonial.id)
+    query = ConferenciaPatrimonialItem.query.filter_by(conferencia_id=conferencia_patrimonial.id)
     if direction == 'asc':
         query = query.order_by(sort_col.asc())
     else:
@@ -476,7 +476,7 @@ def editar_conferencia_patrimonial(conferencia_patrimonial_id):
 @bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/remover', methods=['POST'])
 def remover_conferencia_patrimonial(conferencia_patrimonial_id):
     conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
-    ConferenciaPatrimonialItem.query.filter_by(conferencia_patrimonial_id=conferencia_patrimonial.id).delete()
+    ConferenciaPatrimonialItem.query.filter_by(conferencia_id=conferencia_patrimonial.id).delete()
     db.session.delete(conferencia_patrimonial)
     db.session.commit()
     flash('Conferencia Patrimonial removida com sucesso!')

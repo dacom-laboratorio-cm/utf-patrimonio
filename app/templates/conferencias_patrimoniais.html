@@ -12,7 +12,7 @@
       <thead>
         <tr>
           <th scope="col">
-            <a href="{{ url_for('patrimonio.conferencias', sort='id', direction='asc' if sort != 'id' or direction == 'desc' else 'desc') }}">
+            <a href="{{ url_for('patrimonio.conferencias_patrimoniais', sort='id', direction='asc' if sort != 'id' or direction == 'desc' else 'desc') }}">
               ID
               {% if sort == 'id' %}
                 {% if direction == 'asc' %}↑{% else %}↓{% endif %}
@@ -20,7 +20,7 @@
             </a>
           </th>
           <th scope="col">
-            <a href="{{ url_for('patrimonio.conferencias', sort='local', direction='asc' if sort != 'local' or direction == 'desc' else 'desc') }}">
+            <a href="{{ url_for('patrimonio.conferencias_patrimoniais', sort='local', direction='asc' if sort != 'local' or direction == 'desc' else 'desc') }}">
               Local
               {% if sort == 'local' %}
                 {% if direction == 'asc' %}↑{% else %}↓{% endif %}
@@ -28,7 +28,7 @@
             </a>
           </th>
           <th scope="col">
-            <a href="{{ url_for('patrimonio.conferencias', sort='responsavel', direction='asc' if sort != 'responsavel' or direction == 'desc' else 'desc') }}">
+            <a href="{{ url_for('patrimonio.conferencias_patrimoniais', sort='responsavel', direction='asc' if sort != 'responsavel' or direction == 'desc' else 'desc') }}">
               Responsável
               {% if sort == 'responsavel' %}
                 {% if direction == 'asc' %}↑{% else %}↓{% endif %}
@@ -36,7 +36,7 @@
             </a>
           </th>
           <th scope="col">
-            <a href="{{ url_for('patrimonio.conferencias', sort='data', direction='asc' if sort != 'data' or direction == 'desc' else 'desc') }}">
+            <a href="{{ url_for('patrimonio.conferencias_patrimoniais', sort='data', direction='asc' if sort != 'data' or direction == 'desc' else 'desc') }}">
               Data
               {% if sort == 'data' %}
                 {% if direction == 'asc' %}↑{% else %}↓{% endif %}
@@ -47,16 +47,16 @@
         </tr>
       </thead>
       <tbody>
-        {% for c in conferencias %}
+        {% for c in conferencias_patrimoniais %}
         <tr>
           <td>{{ c.id }}</td>
           <td>{{ c.local }}</td>
           <td>{{ c.responsavel }}</td>
           <td>{{ c.data.strftime('%d/%m/%Y %H:%M') }}</td>
           <td>
-            <a href="{{ url_for('patrimonio.conferencia_detalhe', conferencia_id=c.id) }}" class="btn btn-sm btn-info" aria-label="Ver conferência {{ c.id }}">Ver</a>
-            <a href="{{ url_for('patrimonio.editar_conferencia', conferencia_id=c.id) }}" class="btn btn-sm btn-warning" aria-label="Editar conferência {{ c.id }}">Editar</a>
-            <form method="post" action="{{ url_for('patrimonio.remover_conferencia', conferencia_id=c.id) }}" style="display:inline;">
+            <a href="{{ url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=c.id) }}" class="btn btn-sm btn-info" aria-label="Ver conferência {{ c.id }}">Ver</a>
+            <a href="{{ url_for('patrimonio.editar_conferencia_patrimonial', conferencia_patrimonial_id=c.id) }}" class="btn btn-sm btn-warning" aria-label="Editar conferência {{ c.id }}">Editar</a>
+            <form method="post" action="{{ url_for('patrimonio.remover_conferencia_patrimonial', conferencia_patrimonial_id=c.id) }}" style="display:inline;">
               <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover esta conferência?');" aria-label="Remover conferência {{ c.id }}">Remover</button>
             </form>
           </td>
