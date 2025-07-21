@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Levantamento de Patrimônio{% endblock %}
+{% block title %}Conferência Patrimonial{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-end mb-3">
-    <a href="{{ url_for('patrimonio.levantamento_manual') }}" class="btn btn-secondary">Levantamento Manual</a>
+    <a href="{{ url_for('patrimonio.conferencia_patrimonial_manual') }}" class="btn btn-secondary">Conferência Manual</a>
 </div>
-<main aria-labelledby="titulo-levantamento">
-<h2 id="titulo-levantamento">Levantamento</h2>
-<section aria-labelledby="titulo-levantamento">
+<main aria-labelledby="titulo-conferencia">
+<h2 id="titulo-conferencia">Conferência Patrimonial</h2>
+<section aria-labelledby="titulo-conferencia">
   <form method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <div class="mb-3">
@@ -29,8 +29,8 @@
   </form>
 
   {% if relatorio %}
-    <h3 class="mt-4">Relatório do Levantamento</h3>
-    <section aria-label="Resumo do levantamento">
+    <h3 class="mt-4">Relatório da Conferência Patrimonial</h3>
+    <section aria-label="Resumo da conferência">
       <ul>
         <li><strong>Bens sem inconsistência:</strong> {{ relatorio.encontrados_correto|length }}</li>
         <li><strong>Inconsistência: Bens de outro local</strong> {{ relatorio.encontrados_erro_local|length }}</li>
@@ -74,7 +74,7 @@
           </ul>
         </div>
       </div>
-      <form method="post" action="/levantamento/salvar">
+      <form method="post" action="/conferencia_patrimonial/salvar">
         <input type="hidden" name="local" value="{{ relatorio.local }}">
         <input type="hidden" name="responsavel" value="{{ relatorio.responsavel }}">
         <input type="hidden" name="encontrados_correto" value="{{ relatorio.encontrados_correto|map(attribute=0)|join(',') }}">
@@ -83,7 +83,7 @@
         <input type="hidden" name="desconhecidos" value="{% for t, desc in relatorio.desconhecidos %}{{ t }}|{{ desc }};{% endfor %}">
         <input type="hidden" name="faltantes" value="{{ relatorio.faltantes|map(attribute=0)|join(',') }}">
         <input type="hidden" name="sem_etiqueta" value="{% for desc in relatorio.sem_etiqueta %}{{ desc }};{% endfor %}">
-        <button type="submit" class="btn btn-success mt-3" aria-label="Salvar levantamento">Salvar levantamento</button>
+        <button type="submit" class="btn btn-success mt-3" aria-label="Salvar conferencia">Salvar conferência</button>
       </form>
     </section>
   {% endif %}

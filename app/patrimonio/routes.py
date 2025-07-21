@@ -2,10 +2,10 @@ from flask import render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from ..models import ItemPatrimonio, LogProcessamento, Levantamento, LevantamentoItem
+from ..models import ItemPatrimonio, LogProcessamento, ConferenciaPatrimonial, ConferenciaPatrimonialItem
 from . import bp
 from .services import processar_pdf
-from .forms import UploadPDFForm, FiltroItensForm, LevantamentoForm
+from .forms import UploadPDFForm, FiltroItensForm, ConferenciaPatrimonialForm
 import csv
 from io import StringIO, TextIOWrapper
 from zoneinfo import ZoneInfo
@@ -40,7 +40,8 @@ def upload():
                     qtd_bens_pdf=resultado['qtd_bens'],
                     qtd_itens_extraidos=len(resultado['itens']),
                     divergencia=resultado['divergencia'],
-                    erro=resultado['erro']
+                    erro=resultado['erro'],
+                    local=resultado['itens'][0][4] if resultado['itens'] else None
                 )
                 db.session.add(log)
                 db.session.commit()
@@ -48,13 +49,13 @@ def upload():
                 if not resultado['erro']:
                     for item in resultado['itens']:
                         existe = ItemPatrimonio.query.filter_by(
-                            tombo=item[0], local=item[4], arquivo_pdf=filename
+                            tombo=item[0], local=item[4], observacao=filename
                         ).first()
                         if not existe:
                             db.session.add(ItemPatrimonio(
                                 tombo=item[0], descricao=item[1], valor=item[2],
                                 termo_data=item[3], local=item[4], responsavel=item[5],
-                                arquivo_pdf=filename
+                                observacao=filename
                             ))
                     db.session.commit()
                 logs.append({
@@ -72,8 +73,25 @@ def upload():
 
 @bp.route('/logs')
 def logs():
-    logs = LogProcessamento.query.order_by(LogProcessamento.id.desc()).all()
-    return render_template('logs.html', logs=logs)
+    sort = request.args.get('sort', 'id')
+    direction = request.args.get('direction', 'desc')
+    sort_fields = {
+        'id': LogProcessamento.id,
+        'arquivo_pdf': LogProcessamento.arquivo_pdf,
+        'local': LogProcessamento.local,
+        'responsavel': LogProcessamento.responsavel,
+        'qtd_bens_pdf': LogProcessamento.qtd_bens_pdf,
+        'qtd_itens_extraidos': LogProcessamento.qtd_itens_extraidos,
+        'divergencia': LogProcessamento.divergencia,
+        'erro': LogProcessamento.erro
+    }
+    sort_col = sort_fields.get(sort, LogProcessamento.id)
+    if direction == 'asc':
+        query = LogProcessamento.query.order_by(sort_col.asc())
+    else:
+        query = LogProcessamento.query.order_by(sort_col.desc())
+    logs = query.all()
+    return render_template('logs.html', logs=logs, sort=sort, direction=direction)
 
 @bp.route('/itens/', defaults={'local': None, 'responsavel': None})
 @bp.route('/itens/local/<local>/', defaults={'responsavel': None})
@@ -95,7 +113,7 @@ def itens(local, responsavel):
         'termo_data': ItemPatrimonio.termo_data,
         'local': ItemPatrimonio.local,
         'responsavel': ItemPatrimonio.responsavel,
-        'arquivo_pdf': ItemPatrimonio.arquivo_pdf,
+        'observacao': ItemPatrimonio.observacao,
         'id': ItemPatrimonio.id
     }
     sort_col = sort_fields.get(sort, ItemPatrimonio.id)
@@ -117,11 +135,11 @@ def itens(local, responsavel):
     filtro_form.responsavel.choices = [('', 'Todos')] + [(r, r) for r in responsaveis]
     return render_template('itens.html', itens=itens, locais=locais, responsaveis=responsaveis, pagination=pagination, sort=sort, direction=direction, filtro_local=local, filtro_responsavel=responsavel, filtro_form=filtro_form, tombo=tombo)
 
-@bp.route('/levantamento', methods=['GET', 'POST'])
-def levantamento():
+@bp.route('/conferencia_patrimonial', methods=['GET', 'POST'])
+def conferencia_patrimonial():
     locais = db.session.query(ItemPatrimonio.local).distinct().all()
-    locais = sorted([l[0] for l in locais])
-    form = LevantamentoForm()
+    locais = sorted([l[0] for l in locais if l[0]])
+    form = ConferenciaPatrimonialForm()
     form.local.choices = [(l, l) for l in locais]
     relatorio = None
     if form.validate_on_submit():
@@ -184,10 +202,10 @@ def levantamento():
             'tombos_digitados': tombos_lista,
             'sem_etiqueta': sem_etiqueta
         }
-    return render_template('levantamento.html', form=form, relatorio=relatorio)
+    return render_template('conferencia_patrimonial.html', form=form, relatorio=relatorio)
 
-@bp.route('/levantamento/salvar', methods=['POST'])
-def salvar_levantamento():
+@bp.route('/conferencia_patrimonial/salvar', methods=['POST'])
+def salvar_conferencia_patrimonial():
     # Recebe dados do formulário oculto
     local = request.form.get('local')
     responsavel = request.form.get('responsavel')
@@ -206,9 +224,9 @@ def salvar_levantamento():
             descricoes_desconhecidos.append(parts[1] if len(parts) > 1 else '')
     faltantes = request.form.get('faltantes', '').split(',') if request.form.get('faltantes') else []
     sem_etiqueta = request.form.get('sem_etiqueta', '').split(';') if request.form.get('sem_etiqueta') else []
-    # Cria levantamento
-    levantamento = Levantamento(local=local, responsavel=responsavel)
-    db.session.add(levantamento)
+    # Cria conferencia_patrimonial
+    conferencia_patrimonial = ConferenciaPatrimonial(local=local, responsavel=responsavel)
+    db.session.add(conferencia_patrimonial)
     db.session.commit()
     # Salva itens encontrados corretos
     for t in encontrados_correto:
@@ -216,50 +234,50 @@ def salvar_levantamento():
             item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
             if not item_banco:
                 # Cria o item se não existir
-                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', arquivo_pdf='')
+                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='ok', local_banco=local, descricao=item_banco.descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='ok', local_banco=local, descricao=item_banco.descricao))
     # Salva itens encontrados em outro local
     for idx, t in enumerate(encontrados_erro_local):
         if t:
             local_banco = encontrados_erro_local_locais[idx] if idx < len(encontrados_erro_local_locais) else ''
             item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local_banco).first()
             if not item_banco:
-                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local_banco, responsavel='', arquivo_pdf='')
+                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local_banco, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente', local_banco=local_banco, descricao=item_banco.descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente', local_banco=local_banco, descricao=item_banco.descricao))
     # Salva desconhecidos
     for idx, t in enumerate(desconhecidos):
         if t:
             descricao = descricoes_desconhecidos[idx] if idx < len(descricoes_desconhecidos) else ''
             item_banco = ItemPatrimonio.query.filter_by(tombo=t).first()
             if not item_banco:
-                item_banco = ItemPatrimonio(tombo=t, descricao=descricao, valor='0', termo_data='', local='', responsavel='', arquivo_pdf='')
+                item_banco = ItemPatrimonio(tombo=t, descricao=descricao, valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
     # Salva faltantes
     for t in faltantes:
         if t:
             item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
             if not item_banco:
-                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', arquivo_pdf='')
+                item_banco = ItemPatrimonio(tombo=t, descricao='', valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=item_banco.id, inconsistencia='nao_encontrado', local_banco=local, descricao=item_banco.descricao))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='nao_encontrado', local_banco=local, descricao=item_banco.descricao))
     # Salva itens sem etiqueta
     for desc in sem_etiqueta:
         if desc.strip():
             # Para itens sem etiqueta, não há tombo, então não cria ItemPatrimonio
-            db.session.add(LevantamentoItem(levantamento_id=levantamento.id, item_patrimonio_id=None, inconsistencia='sem_etiqueta', local_banco=None, descricao=desc.strip()))
+            db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, item_patrimonio_id=None, inconsistencia='sem_etiqueta', local_banco=None, descricao=desc.strip()))
     db.session.commit()
-    flash('Levantamento salvo com sucesso!')
-    return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id))
+    flash('Conferencia Patrimonial salva com sucesso!')
+    return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id))
 
-@bp.route('/levantamento/manual', methods=['GET', 'POST'])
-def levantamento_manual():
+@bp.route('/conferencia_patrimonial/manual', methods=['GET', 'POST'])
+def conferencia_patrimonial_manual():
     if 'itens' not in session:
         session['itens'] = []
     if 'local_manual' not in session:
@@ -282,7 +300,7 @@ def levantamento_manual():
         except Exception:
             mensagem = 'Erro ao remover item.'
         print('DEBUG[REMOVER]: session[local_manual]=', session.get('local_manual'), 'session[itens]=', session.get('itens'))
-        return redirect(url_for('patrimonio.levantamento_manual'))
+        return redirect(url_for('patrimonio.conferencia_patrimonial_manual'))
     if editar_idx is not None:
         try:
             idx = int(editar_idx)
@@ -335,7 +353,7 @@ def levantamento_manual():
             responsavel = session.get('responsavel_manual', '')
             print('DEBUG[SALVAR]: local_manual=', local, 'session[itens]=', session.get('itens'), 'responsavel_manual=', responsavel)
             if not responsavel:
-                mensagem = 'Informe o responsável pelo levantamento.'
+                mensagem = 'Informe o responsável pela conferencia_patrimonial.'
                 print('DEBUG[SALVAR][ERRO]: responsável não informado')
             elif local and session['itens']:
                 # --- NOVA LÓGICA DE CLASSIFICAÇÃO ---
@@ -360,106 +378,119 @@ def levantamento_manual():
                 desconhecidos = [(t, descricoes_digitadas.get(t, '')) for t in tombos_desconhecidos]
                 # d) Faltantes
                 faltantes = [(t, next((i.descricao for i in itens_banco_local if i.tombo == t), '')) for t in tombos_banco_local if t not in tombos_set]
-                levantamento = Levantamento(local=local, responsavel=responsavel)
-                db.session.add(levantamento)
+                conferencia_patrimonial = ConferenciaPatrimonial(local=local, responsavel=responsavel)
+                db.session.add(conferencia_patrimonial)
                 db.session.commit()
                 # Salva encontrados corretos
                 for t, descricao in encontrados_correto:
-                    db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, descricao=descricao, inconsistencia='ok', local_banco=local))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='ok', local_banco=local))
                 # Salva encontrados em outro local
                 for t, local_banco, descricao in encontrados_erro_local:
-                    db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, descricao=descricao, inconsistencia='local_divergente', local_banco=local_banco))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente', local_banco=local_banco))
                 # Salva desconhecidos
                 for t, descricao in desconhecidos:
-                    db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, descricao=descricao, inconsistencia='local_divergente_desconhecida', local_banco=None))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente_desconhecida', local_banco=None))
                 # Salva faltantes
                 for t, descricao in faltantes:
-                    db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo=t, descricao=descricao, inconsistencia='nao_encontrado', local_banco=local))
+                    db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='nao_encontrado', local_banco=local))
                 # Salva itens sem etiqueta
                 for desc in sem_etiqueta:
                     if desc.strip():
-                        db.session.add(LevantamentoItem(levantamento_id=levantamento.id, tombo='', descricao=desc.strip(), inconsistencia='sem_etiqueta', local_banco=None))
+                        db.session.add(ConferenciaPatrimonialItem(conferencia_patrimonial_id=conferencia_patrimonial.id, tombo='', descricao=desc.strip(), inconsistencia='sem_etiqueta', local_banco=None))
                 db.session.commit()
                 session.pop('itens')
                 session.pop('local_manual')
                 session.pop('responsavel_manual')
-                print('DEBUG[SALVO]: levantamento_id=', levantamento.id)
-                return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id))
+                print('DEBUG[SALVO]: conferencia_patrimonial_id=', conferencia_patrimonial.id)
+                return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id))
             else:
                 mensagem = 'Informe o local, o responsável e adicione pelo menos um item.'
                 print('DEBUG[SALVAR][ERRO]: local_manual=', local, 'session[itens]=', session.get('itens'), 'responsavel_manual=', responsavel)
     ultimo_descricao = session['itens'][-1]['descricao'] if session['itens'] else ''
-    return render_template('levantamento_manual.html', itens=session['itens'], ultimo_descricao=ultimo_descricao, mensagem=mensagem, item_editar=item_editar, editando_idx=editar_idx, locais=locais, local_manual=session.get('local_manual', ''), responsavel_manual=session.get('responsavel_manual', ''))
+    return render_template('conferencia_patrimonial_manual.html', itens=session['itens'], ultimo_descricao=ultimo_descricao, mensagem=mensagem, item_editar=item_editar, editando_idx=editar_idx, locais=locais, local_manual=session.get('local_manual', ''), responsavel_manual=session.get('responsavel_manual', ''))
 
-@bp.route('/levantamentos')
-def levantamentos():
-    lista = Levantamento.query.order_by(Levantamento.data.desc()).all()
+@bp.route('/conferencias_patrimoniais')
+def conferencias_patrimoniais():
+    sort = request.args.get('sort', 'data')
+    direction = request.args.get('direction', 'desc')
+    sort_fields = {
+        'id': ConferenciaPatrimonial.id,
+        'local': ConferenciaPatrimonial.local,
+        'responsavel': ConferenciaPatrimonial.responsavel,
+        'data': ConferenciaPatrimonial.data
+    }
+    sort_col = sort_fields.get(sort, ConferenciaPatrimonial.data)
+    if direction == 'asc':
+        query = ConferenciaPatrimonial.query.order_by(sort_col.asc())
+    else:
+        query = ConferenciaPatrimonial.query.order_by(sort_col.desc())
+    lista = query.all()
     for l in lista:
         if l.data.tzinfo is None:
             l.data = l.data.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('America/Sao_Paulo'))
         else:
             l.data = l.data.astimezone(ZoneInfo('America/Sao_Paulo'))
-    return render_template('levantamentos.html', levantamentos=lista)
+    return render_template('conferencias_patrimoniais.html', conferencias_patrimoniais=lista, sort=sort, direction=direction)
 
-@bp.route('/levantamento/<int:levantamento_id>')
-def levantamento_detalhe(levantamento_id):
-    levantamento = Levantamento.query.get_or_404(levantamento_id)
-    if levantamento.data.tzinfo is None:
-        levantamento.data = levantamento.data.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('America/Sao_Paulo'))
+@bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>')
+def conferencia_patrimonial_detalhe(conferencia_patrimonial_id):
+    conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
+    if conferencia_patrimonial.data.tzinfo is None:
+        conferencia_patrimonial.data = conferencia_patrimonial.data.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('America/Sao_Paulo'))
     else:
-        levantamento.data = levantamento.data.astimezone(ZoneInfo('America/Sao_Paulo'))
+        conferencia_patrimonial.data = conferencia_patrimonial.data.astimezone(ZoneInfo('America/Sao_Paulo'))
     sort = request.args.get('sort', 'id')
     direction = request.args.get('direction', 'asc')
     sort_fields = {
-        # 'tombo': LevantamentoItem.tombo,  # Removido pois não existe mais
-        'descricao': LevantamentoItem.descricao,
-        'inconsistencia': LevantamentoItem.inconsistencia,
-        'local_banco': LevantamentoItem.local_banco,
-        'id': LevantamentoItem.id
+        # 'tombo': ConferenciaPatrimonialItem.tombo,  # Removido pois não existe mais
+        'descricao': ConferenciaPatrimonialItem.descricao,
+        'inconsistencia': ConferenciaPatrimonialItem.inconsistencia,
+        'local_banco': ConferenciaPatrimonialItem.local_banco,
+        'id': ConferenciaPatrimonialItem.id
     }
-    sort_col = sort_fields.get(sort, LevantamentoItem.id)
-    query = LevantamentoItem.query.filter_by(levantamento_id=levantamento.id)
+    sort_col = sort_fields.get(sort, ConferenciaPatrimonialItem.id)
+    query = ConferenciaPatrimonialItem.query.filter_by(conferencia_patrimonial_id=conferencia_patrimonial.id)
     if direction == 'asc':
         query = query.order_by(sort_col.asc())
     else:
         query = query.order_by(sort_col.desc())
     itens = query.all()
-    return render_template('levantamento_detalhe.html', levantamento=levantamento, itens=itens, sort=sort, direction=direction)
+    return render_template('conferencia_patrimonial_detalhe.html', conferencia_patrimonial=conferencia_patrimonial, itens=itens, sort=sort, direction=direction)
 
-@bp.route('/levantamento/<int:levantamento_id>/editar', methods=['GET', 'POST'])
-def editar_levantamento(levantamento_id):
-    levantamento = Levantamento.query.get_or_404(levantamento_id)
+@bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/editar', methods=['GET', 'POST'])
+def editar_conferencia_patrimonial(conferencia_patrimonial_id):
+    conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
     if request.method == 'POST':
         local = request.form.get('local', '').strip()
         responsavel = request.form.get('responsavel', '').strip()
         if not local or not responsavel:
             flash('Local e responsável são obrigatórios.')
         else:
-            levantamento.local = local
-            levantamento.responsavel = responsavel
+            conferencia_patrimonial.local = local
+            conferencia_patrimonial.responsavel = responsavel
             db.session.commit()
-            flash('Levantamento atualizado com sucesso!')
-            return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id))
-    return render_template('editar_levantamento.html', levantamento=levantamento)
+            flash('Conferencia Patrimonial atualizada com sucesso!')
+            return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id))
+    return render_template('editar_conferencia_patrimonial.html', conferencia_patrimonial=conferencia_patrimonial)
 
-@bp.route('/levantamento/<int:levantamento_id>/remover', methods=['POST'])
-def remover_levantamento(levantamento_id):
-    levantamento = Levantamento.query.get_or_404(levantamento_id)
-    LevantamentoItem.query.filter_by(levantamento_id=levantamento.id).delete()
-    db.session.delete(levantamento)
+@bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/remover', methods=['POST'])
+def remover_conferencia_patrimonial(conferencia_patrimonial_id):
+    conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
+    ConferenciaPatrimonialItem.query.filter_by(conferencia_patrimonial_id=conferencia_patrimonial.id).delete()
+    db.session.delete(conferencia_patrimonial)
     db.session.commit()
-    flash('Levantamento removido com sucesso!')
-    return redirect(url_for('patrimonio.levantamentos'))
+    flash('Conferencia Patrimonial removida com sucesso!')
+    return redirect(url_for('patrimonio.conferencias_patrimoniais'))
 
-@bp.route('/levantamento/<int:levantamento_id>/item/<int:item_id>/editar', methods=['GET', 'POST'])
-def editar_item_levantamento(levantamento_id, item_id):
-    levantamento = Levantamento.query.get_or_404(levantamento_id)
-    item = LevantamentoItem.query.get_or_404(item_id)
+@bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/item/<int:item_id>/editar', methods=['GET', 'POST'])
+def editar_item_conferencia_patrimonial(conferencia_patrimonial_id, item_id):
+    conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
+    item = ConferenciaPatrimonialItem.query.get_or_404(item_id)
     if request.method == 'POST':
         tombo = request.form.get('tombo', '').strip()
         descricao = request.form.get('descricao', '').strip()
         status = request.form.get('status', '').strip()
-        local_banco = request.form.get('local_banco', '').strip() if status == 'encontrado_erro_local' else levantamento.local
+        local_banco = request.form.get('local_banco', '').strip() if status == 'encontrado_erro_local' else conferencia_patrimonial.local
         if status == 'sem_etiqueta':
             tombo = ''
         if status != 'sem_etiqueta' and (not tombo or not tombo.isdigit() or len(tombo) != 6):
@@ -473,13 +504,13 @@ def editar_item_levantamento(levantamento_id, item_id):
             item.local_banco = local_banco
             db.session.commit()
             flash('Item atualizado com sucesso!')
-            return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id))
-    return render_template('editar_item_levantamento.html', levantamento=levantamento, item=item)
+            return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id))
+    return render_template('editar_item_conferencia_patrimonial.html', conferencia_patrimonial=conferencia_patrimonial, item=item)
 
-@bp.route('/levantamento/<int:levantamento_id>/item/<int:item_id>/remover', methods=['POST'])
-def remover_item_levantamento(levantamento_id, item_id):
-    item = LevantamentoItem.query.get_or_404(item_id)
+@bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/item/<int:item_id>/remover', methods=['POST'])
+def remover_item_conferencia_patrimonial(conferencia_patrimonial_id, item_id):
+    item = ConferenciaPatrimonialItem.query.get_or_404(item_id)
     db.session.delete(item)
     db.session.commit()
     flash('Item removido com sucesso!')
-    return redirect(url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento_id)) 
+    return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial_id)) 

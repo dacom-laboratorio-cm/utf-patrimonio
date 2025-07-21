@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este projeto é um sistema web para controle, conferência e levantamento de patrimônio institucional, desenvolvido em Flask. Permite importar dados de PDFs, consultar e filtrar itens, realizar levantamentos de inventário por sala/local, gerar relatórios de conferência e manter histórico de levantamentos.
+Este projeto é um sistema web para controle, conferência e inventário de patrimônio institucional, desenvolvido em Flask. Permite importar dados de PDFs, consultar e filtrar itens, realizar conferências patrimoniais por sala/local, gerar relatórios de conferência e manter histórico de conferências.
 
 ---
 
@@ -10,8 +10,8 @@ Este projeto é um sistema web para controle, conferência e levantamento de pat
 
 - **Importação de PDFs**: Extração automática de itens de patrimônio a partir de arquivos PDF.
 - **Consulta e Filtros**: Visualização dos itens cadastrados, com filtros por local, responsável e número do tombo.
-- **Levantamento de Patrimônio**: Realize inventários por sala, digitando os tombos encontrados e gerando relatório de conferência.
-- **Histórico de Levantamentos**: Salve e consulte levantamentos anteriores, com detalhamento dos itens encontrados, faltantes, desconhecidos e em local divergente.
+- **Conferência Patrimonial**: Realize conferências por sala, digitando os tombos encontrados e gerando relatório de conferência.
+- **Histórico de Conferências**: Salve e consulte conferências anteriores, com detalhamento dos itens encontrados, faltantes, desconhecidos e em local divergente.
 - **Logs de Processamento**: Acompanhe o resultado da importação de PDFs.
 
 ---
@@ -79,8 +79,8 @@ Veja `requirements.txt`:
 2. Acesse no navegador:
    - Importar PDFs: `http://localhost:5000/upload`
    - Itens: `http://localhost:5000/itens`
-   - Levantamentos: `http://localhost:5000/levantamentos`
-   - Novo Levantamento: `http://localhost:5000/levantamento`
+   - Conferências: `http://localhost:5000/conferencias_patrimoniais`
+   - Nova Conferência: `http://localhost:5000/conferencia_patrimonial`
    - Logs: `http://localhost:5000/logs`
 
 ---
@@ -105,9 +105,12 @@ utf-patrimonio/
 │   │   ├── upload.html
 │   │   ├── itens.html
 │   │   ├── logs.html
-│   │   ├── levantamento.html
-│   │   ├── levantamentos.html
-│   │   ├── levantamento_detalhe.html
+│   │   ├── conferencia_patrimonial.html
+│   │   ├── conferencias_patrimoniais.html
+│   │   ├── conferencia_patrimonial_detalhe.html
+│   │   ├── conferencia_patrimonial_manual.html
+│   │   ├── editar_conferencia_patrimonial.html
+│   │   ├── editar_item_conferencia_patrimonial.html
 │   │   ├── 404.html
 │   │   └── 500.html
 │   └── static/
@@ -134,7 +137,7 @@ erDiagram
         String termo_data
         String local
         String responsavel
-        String arquivo_pdf
+        String observacao
     }
     LogProcessamento {
         Integer id PK
@@ -144,25 +147,26 @@ erDiagram
         Integer qtd_itens_extraidos
         Boolean divergencia
         Text erro
+        String local
     }
-    Levantamento {
+    ConferenciaPatrimonial {
         Integer id PK
         String local
         DateTime data
         String responsavel
     }
-    LevantamentoItem {
+    ConferenciaPatrimonialItem {
         Integer id PK
-        Integer levantamento_id FK
+        Integer conferencia_patrimonial_id FK
         Integer item_patrimonio_id FK
         String inconsistencia
         String local_banco
         Text descricao
     }
-    Levantamento ||--o{ LevantamentoItem : "possui"
-    LevantamentoItem }o--|| Levantamento : "pertence a"
-    ItemPatrimonio |o--o{ LevantamentoItem : "referenciado por"
-    LevantamentoItem }o--o| ItemPatrimonio : "referencia"
+    ConferenciaPatrimonial ||--o{ ConferenciaPatrimonialItem : "possui"
+    ConferenciaPatrimonialItem }o--|| ConferenciaPatrimonial : "pertence a"
+    ItemPatrimonio |o--o{ ConferenciaPatrimonialItem : "referenciado por"
+    ConferenciaPatrimonialItem }o--o| ItemPatrimonio : "referencia"
 ```
 
 ---
@@ -170,7 +174,7 @@ erDiagram
 ## Observações
 - O sistema utiliza SQLite por padrão, mas pode ser adaptado para outros bancos.
 - O upload de PDFs e o processamento dependem do layout dos arquivos.
-- O levantamento de patrimônio permite salvar e consultar históricos para auditoria.
+- A conferência patrimonial permite salvar e consultar históricos para auditoria.
 
 ---
 

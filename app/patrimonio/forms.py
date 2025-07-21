@@ -12,9 +12,9 @@ class FiltroItensForm(FlaskForm):
     tombo = StringField('Tombo')
     submit = SubmitField('Filtrar')
 
-class LevantamentoForm(FlaskForm):
+class ConferenciaPatrimonialForm(FlaskForm):
     local = SelectField('Local', choices=[], validators=[DataRequired()])
     responsavel = StringField('Responsável', validators=[DataRequired()])
     tombos = TextAreaField('Tombos encontrados (um por linha ou separados por vírgula)', validators=[])
     csvfile = FileField('Importar CSV de tombos (cabeçalho: tombo,descricao)')
-    submit = SubmitField('Processar levantamento') 
+    submit = SubmitField('Processar conferência') 

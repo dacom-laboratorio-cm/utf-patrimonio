@@ -53,13 +53,13 @@ document.getElementById('filtro-form').onsubmit = function(e) {
       <caption class="visually-hidden">Lista de itens do patrimônio</caption>
       <thead>
         <tr>
-          <th scope="col">Tombo</th>
-          <th scope="col">Descrição</th>
-          <th scope="col">Valor</th>
-          <th scope="col">Termo/Data</th>
-          <th scope="col">Local</th>
-          <th scope="col">Responsável</th>
-          <th scope="col">Arquivo PDF</th>
+          <th scope="col">{{ sort_link('tombo', 'Tombo', sort, direction) }}</th>
+          <th scope="col">{{ sort_link('descricao', 'Descrição', sort, direction) }}</th>
+          <th scope="col">{{ sort_link('valor', 'Valor', sort, direction) }}</th>
+          <th scope="col">{{ sort_link('termo_data', 'Termo/Data', sort, direction) }}</th>
+          <th scope="col">{{ sort_link('local', 'Local', sort, direction) }}</th>
+          <th scope="col">{{ sort_link('responsavel', 'Responsável', sort, direction) }}</th>
+          <th scope="col">{{ sort_link('observacao', 'Observação', sort, direction) }}</th>
         </tr>
       </thead>
       <tbody>
@@ -71,7 +71,7 @@ document.getElementById('filtro-form').onsubmit = function(e) {
           <td>{{ item.termo_data }}</td>
           <td>{{ item.local }}</td>
           <td>{{ item.responsavel }}</td>
-          <td>{{ item.arquivo_pdf }}</td>
+          <td>{{ item.observacao }}</td>
         </tr>
         {% endfor %}
       </tbody>

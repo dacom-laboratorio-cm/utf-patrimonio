@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Editar Item do Levantamento{% endblock %}
+{% block title %}Editar Item da Conferência Patrimonial{% endblock %}
 {% block content %}
 <main aria-labelledby="titulo-editar-item">
-<h2 id="titulo-editar-item">Editar Item do Levantamento</h2>
+<h2 id="titulo-editar-item">Editar Item da Conferência Patrimonial</h2>
 <form method="post" autocomplete="off">
     <div class="mb-3">
         <label for="inconsistencia">Inconsistência:</label>
@@ -27,7 +27,7 @@
         <input type="text" name="descricao" id="descricao" class="form-control" value="{{ item.descricao }}" required aria-label="Descrição do item">
     </div>
     <button type="submit" class="btn btn-success" aria-label="Salvar alterações do item">Salvar alterações</button>
-    <a href="{{ url_for('patrimonio.levantamento_detalhe', levantamento_id=levantamento.id) }}" class="btn btn-secondary" aria-label="Cancelar edição">Cancelar</a>
+    <a href="{{ url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id) }}" class="btn btn-secondary" aria-label="Cancelar edição">Cancelar</a>
 </form>
 </main>
 <script>

@@ -9,18 +9,73 @@
       <caption class="visually-hidden">Logs de processamento</caption>
       <thead>
         <tr>
-          <th scope="col">Arquivo</th>
-          <th scope="col">Responsável</th>
-          <th scope="col">Qtd. Bens (PDF)</th>
-          <th scope="col">Itens Extraídos</th>
-          <th scope="col">Divergência</th>
-          <th scope="col">Erro</th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='arquivo_pdf', direction='asc' if sort != 'arquivo_pdf' or direction == 'desc' else 'desc') }}">
+              Arquivo
+              {% if sort == 'arquivo_pdf' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='local', direction='asc' if sort != 'local' or direction == 'desc' else 'desc') }}">
+              Local
+              {% if sort == 'local' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='responsavel', direction='asc' if sort != 'responsavel' or direction == 'desc' else 'desc') }}">
+              Responsável
+              {% if sort == 'responsavel' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='qtd_bens_pdf', direction='asc' if sort != 'qtd_bens_pdf' or direction == 'desc' else 'desc') }}">
+              Qtd. Bens (PDF)
+              {% if sort == 'qtd_bens_pdf' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='qtd_itens_extraidos', direction='asc' if sort != 'qtd_itens_extraidos' or direction == 'desc' else 'desc') }}">
+              Itens Extraídos
+              {% if sort == 'qtd_itens_extraidos' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='divergencia', direction='asc' if sort != 'divergencia' or direction == 'desc' else 'desc') }}">
+              Divergência
+              {% if sort == 'divergencia' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
+          <th scope="col">
+            <a href="{{ url_for('patrimonio.logs', sort='erro', direction='asc' if sort != 'erro' or direction == 'desc' else 'desc') }}">
+              Erro
+              {% if sort == 'erro' %}
+                {% if direction == 'asc' %}↑{% else %}↓{% endif %}
+              {% endif %}
+            </a>
+          </th>
         </tr>
       </thead>
       <tbody>
         {% for log in logs %}
         <tr>
           <td>{{ log.arquivo_pdf }}</td>
+          <td>
+            {% if log.local %}
+              <a href="{{ url_for('patrimonio.itens', local=log.local) }}">{{ log.local }}</a>
+            {% endif %}
+          </td>
           <td>{{ log.responsavel }}</td>
           <td>{{ log.qtd_bens_pdf }}</td>
           <td>{{ log.qtd_itens_extraidos }}</td>
