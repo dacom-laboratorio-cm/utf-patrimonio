@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Itens do Patrimônio{% endblock %}
+{% block title %}Patrimônios{% endblock %}
 {% block content %}
-<main aria-labelledby="titulo-itens">
-<h2 id="titulo-itens">Itens do Patrimônio</h2>
+<main aria-labelledby="titulo-patrimonios">
+<h2 id="titulo-patrimonios">Patrimônios</h2>
 <form method="get" class="row g-3 mb-4" id="filtro-form" action="">
     {{ filtro_form.hidden_tag() }}
     <div class="col-auto">
@@ -28,7 +28,7 @@ document.getElementById('filtro-form').onsubmit = function(e) {
     const local = document.getElementsByName('local')[0].value;
     const responsavel = document.getElementsByName('responsavel')[0].value;
     const tombo = document.getElementsByName('tombo')[0].value;
-    let url = '/itens/';
+    let url = '/patrimonios/';
     if (local && responsavel) {
         url += 'local/' + encodeURIComponent(local) + '/responsavel/' + encodeURIComponent(responsavel) + '/';
     } else if (local) {
@@ -47,10 +47,10 @@ document.getElementById('filtro-form').onsubmit = function(e) {
 </script>
 {% from '_sort_link.html' import sort_link %}
 {% from '_pagination.html' import render_pagination %}
-<section aria-labelledby="titulo-itens">
+<section aria-labelledby="titulo-patrimonios">
   <div class="table-responsive">
-    <table class="table table-bordered table-striped" aria-describedby="titulo-itens">
-      <caption class="visually-hidden">Lista de itens do patrimônio</caption>
+    <table class="table table-bordered table-striped" aria-describedby="titulo-patrimonios">
+      <caption class="visually-hidden">Lista de patrimônios</caption>
       <thead>
         <tr>
           <th scope="col">{{ sort_link('tombo', 'Tombo', sort, direction) }}</th>
@@ -63,7 +63,7 @@ document.getElementById('filtro-form').onsubmit = function(e) {
         </tr>
       </thead>
       <tbody>
-        {% for item in itens %}
+        {% for item in patrimonios %}
         <tr>
           <td>{{ item.tombo }}</td>
           <td>{{ item.descricao }}</td>

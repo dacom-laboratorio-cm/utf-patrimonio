@@ -5,7 +5,7 @@ from .. import db
 from ..models import ItemPatrimonio, LogProcessamento, ConferenciaPatrimonial, ConferenciaPatrimonialItem
 from . import bp
 from .services import processar_pdf
-from .forms import UploadPDFForm, FiltroItensForm, ConferenciaPatrimonialForm
+from .forms import UploadPDFForm, ConferenciaPatrimonialForm, FiltroPatrimoniosForm
 import csv
 from io import StringIO, TextIOWrapper
 from zoneinfo import ZoneInfo
@@ -93,11 +93,11 @@ def logs():
     logs = query.all()
     return render_template('logs.html', logs=logs, sort=sort, direction=direction)
 
-@bp.route('/itens/', defaults={'local': None, 'responsavel': None})
-@bp.route('/itens/local/<local>/', defaults={'responsavel': None})
-@bp.route('/itens/responsavel/<responsavel>/', defaults={'local': None})
-@bp.route('/itens/local/<local>/responsavel/<responsavel>/')
-def itens(local, responsavel):
+@bp.route('/patrimonios/', defaults={'local': None, 'responsavel': None})
+@bp.route('/patrimonios/local/<local>/', defaults={'responsavel': None})
+@bp.route('/patrimonios/responsavel/<responsavel>/', defaults={'local': None})
+@bp.route('/patrimonios/local/<local>/responsavel/<responsavel>/')
+def patrimonios(local, responsavel):
     page = request.args.get('page', 1, type=int)
     sort = request.args.get('sort', 'id')
     direction = request.args.get('direction', 'desc')
@@ -125,15 +125,15 @@ def itens(local, responsavel):
     if tombo:
         query = query.filter(ItemPatrimonio.tombo.contains(tombo))
     pagination = query.paginate(page=page, per_page=100, error_out=False)
-    itens = pagination.items
+    patrimonios = pagination.items
     locais = db.session.query(ItemPatrimonio.local).distinct().all()
     responsaveis = db.session.query(ItemPatrimonio.responsavel).distinct().all()
     locais = sorted([l[0] for l in locais])
     responsaveis = sorted([r[0] for r in responsaveis])
-    filtro_form = FiltroItensForm()
+    filtro_form = FiltroPatrimoniosForm()
     filtro_form.local.choices = [('', 'Todos')] + [(l, l) for l in locais]
     filtro_form.responsavel.choices = [('', 'Todos')] + [(r, r) for r in responsaveis]
-    return render_template('itens.html', itens=itens, locais=locais, responsaveis=responsaveis, pagination=pagination, sort=sort, direction=direction, filtro_local=local, filtro_responsavel=responsavel, filtro_form=filtro_form, tombo=tombo)
+    return render_template('patrimonios.html', patrimonios=patrimonios, locais=locais, responsaveis=responsaveis, pagination=pagination, sort=sort, direction=direction, filtro_local=local, filtro_responsavel=responsavel, filtro_form=filtro_form, tombo=tombo)
 
 @bp.route('/conferencia_patrimonial', methods=['GET', 'POST'])
 def conferencia_patrimonial():

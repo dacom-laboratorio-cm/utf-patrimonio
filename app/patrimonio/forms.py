@@ -6,7 +6,7 @@ class UploadPDFForm(FlaskForm):
     pdfs = FileField('Selecione um ou mais arquivos PDF', validators=[DataRequired()])
     submit = SubmitField('Importar')
 
-class FiltroItensForm(FlaskForm):
+class FiltroPatrimoniosForm(FlaskForm):
     local = SelectField('Local', choices=[], validate_choice=False)
     responsavel = SelectField('Responsável', choices=[], validate_choice=False)
     tombo = StringField('Tombo')

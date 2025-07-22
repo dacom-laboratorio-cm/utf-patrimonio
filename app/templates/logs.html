@@ -73,7 +73,7 @@
           <td>{{ log.arquivo_pdf }}</td>
           <td>
             {% if log.local %}
-              <a href="{{ url_for('patrimonio.itens', local=log.local) }}">{{ log.local }}</a>
+              <a href="{{ url_for('patrimonio.patrimonios', local=log.local) }}">{{ log.local }}</a>
             {% endif %}
           </td>
           <td>{{ log.responsavel }}</td>
