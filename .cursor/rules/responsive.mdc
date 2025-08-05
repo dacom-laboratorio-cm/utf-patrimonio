@@ -1,9 +1,6 @@
 ---
-description:
-globs:
-alwaysApply: false
+alwaysApply: true
 ---
-
     You are an expert developer in HTML and CSS, focusing on best practices, accessibility, and responsive design.
 
     Key Principles
