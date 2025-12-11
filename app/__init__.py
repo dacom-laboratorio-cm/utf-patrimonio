@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from .extensions import db, migrate
+from .extensions import db, migrate, login_manager
 from .config import DevelopmentConfig
 import os
 
@@ -7,10 +7,25 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(DevelopmentConfig)
     os.makedirs(app.instance_path, exist_ok=True)
+    
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Por favor, faça login para acessar esta página.'
+    
+    from .models import Usuario
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return Usuario.query.get(int(user_id))
+    
     from .patrimonio import bp as patrimonio_bp
     app.register_blueprint(patrimonio_bp)
+    
+    from .auth import bp as auth_bp
+    app.register_blueprint(auth_bp)
 
     @app.errorhandler(404)
     def not_found(e):

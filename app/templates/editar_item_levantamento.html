@@ -9,7 +9,7 @@
         <select name="status" id="inconsistencia" class="form-control" required aria-label="Inconsistência do item" onchange="toggleLocalBanco()">
             <option value="ok" {% if item.inconsistencia == 'ok' %}selected{% endif %}>Encontrado no local correto</option>
             <option value="local_divergente" {% if item.inconsistencia == 'local_divergente' %}selected{% endif %}>Encontrado em outro local</option>
-            <option value="local_divergente_desconhecida" {% if item.inconsistencia == 'local_divergente_desconhecida' %}selected{% endif %}>Local divergente (origem desconhecida)</option>
+            <option value="item_novo" {% if item.inconsistencia == 'item_novo' %}selected{% endif %}>Item novo (não cadastrado)</option>
             <option value="nao_encontrado" {% if item.inconsistencia == 'nao_encontrado' %}selected{% endif %}>Não encontrado</option>
             <option value="sem_etiqueta" {% if item.inconsistencia == 'sem_etiqueta' %}selected{% endif %}>Sem etiqueta</option>
         </select>
@@ -35,7 +35,7 @@ function toggleLocalBanco() {
     var status = document.getElementById('inconsistencia').value;
     var divLocal = document.getElementById('div-local-banco');
     var tombo = document.getElementById('tombo');
-    if (status === 'local_divergente' || status === 'local_divergente_desconhecida') {
+    if (status === 'local_divergente') {
         divLocal.style.display = '';
     } else {
         divLocal.style.display = 'none';

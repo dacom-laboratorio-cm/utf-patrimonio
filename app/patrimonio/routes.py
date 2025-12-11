@@ -1,4 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash, session
+from flask_login import login_required
 from werkzeug.utils import secure_filename
 import os
 from .. import db
@@ -21,6 +22,7 @@ def index():
     return render_template('index.html')
 
 @bp.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload():
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     logs = []
@@ -72,6 +74,7 @@ def upload():
     return render_template('upload.html', logs=None, form=form)
 
 @bp.route('/logs')
+@login_required
 def logs():
     sort = request.args.get('sort', 'id')
     direction = request.args.get('direction', 'desc')
@@ -97,6 +100,7 @@ def logs():
 @bp.route('/patrimonios/local/<local>/', defaults={'responsavel': None})
 @bp.route('/patrimonios/responsavel/<responsavel>/', defaults={'local': None})
 @bp.route('/patrimonios/local/<local>/responsavel/<responsavel>/')
+@login_required
 def patrimonios(local, responsavel):
     page = request.args.get('page', 1, type=int)
     sort = request.args.get('sort', 'id')
@@ -136,6 +140,7 @@ def patrimonios(local, responsavel):
     return render_template('patrimonios.html', patrimonios=patrimonios, locais=locais, responsaveis=responsaveis, pagination=pagination, sort=sort, direction=direction, filtro_local=local, filtro_responsavel=responsavel, filtro_form=filtro_form, tombo=tombo)
 
 @bp.route('/conferencia_patrimonial', methods=['GET', 'POST'])
+@login_required
 def conferencia_patrimonial():
     locais = db.session.query(ItemPatrimonio.local).distinct().all()
     locais = sorted([l[0] for l in locais if l[0]])
@@ -205,6 +210,7 @@ def conferencia_patrimonial():
     return render_template('conferencia_patrimonial.html', form=form, relatorio=relatorio)
 
 @bp.route('/conferencia_patrimonial/salvar', methods=['POST'])
+@login_required
 def salvar_conferencia_patrimonial():
     # Recebe dados do formulário oculto
     local = request.form.get('local')
@@ -254,10 +260,24 @@ def salvar_conferencia_patrimonial():
             descricao = descricoes_desconhecidos[idx] if idx < len(descricoes_desconhecidos) else ''
             item_banco = ItemPatrimonio.query.filter_by(tombo=t).first()
             if not item_banco:
-                item_banco = ItemPatrimonio(tombo=t, descricao=descricao, valor='0', termo_data='', local=local, responsavel='', observacao='obtido de conferência manual')
+                item_banco = ItemPatrimonio(
+                    tombo=t, 
+                    descricao=descricao, 
+                    valor='0', 
+                    termo_data='', 
+                    local=local, 
+                    responsavel=responsavel, 
+                    observacao='Item identificado em conferência'
+                )
                 db.session.add(item_banco)
                 db.session.flush()
-            db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, item_patrimonio_id=item_banco.id, inconsistencia='local_divergente_desconhecida', local_banco=None, descricao=descricao))
+            db.session.add(ConferenciaPatrimonialItem(
+                conferencia_id=conferencia_patrimonial.id, 
+                item_patrimonio_id=item_banco.id, 
+                inconsistencia='item_novo', 
+                local_banco=None, 
+                descricao=descricao
+            ))
     # Salva faltantes
     for t in faltantes:
         if t:
@@ -277,6 +297,7 @@ def salvar_conferencia_patrimonial():
     return redirect(url_for('patrimonio.conferencia_patrimonial_detalhe', conferencia_patrimonial_id=conferencia_patrimonial.id))
 
 @bp.route('/conferencia_patrimonial/manual', methods=['GET', 'POST'])
+@login_required
 def conferencia_patrimonial_manual():
     if 'itens' not in session:
         session['itens'] = []
@@ -381,22 +402,72 @@ def conferencia_patrimonial_manual():
                 conferencia_patrimonial = ConferenciaPatrimonial(local=local, responsavel=responsavel)
                 db.session.add(conferencia_patrimonial)
                 db.session.commit()
+                
                 # Salva encontrados corretos
                 for t, descricao in encontrados_correto:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='ok', local_banco=local))
+                    item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
+                    db.session.add(ConferenciaPatrimonialItem(
+                        conferencia_id=conferencia_patrimonial.id, 
+                        item_patrimonio_id=item_banco.id if item_banco else None,
+                        descricao=descricao, 
+                        inconsistencia='ok', 
+                        local_banco=local
+                    ))
+                
                 # Salva encontrados em outro local
                 for t, local_banco, descricao in encontrados_erro_local:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente', local_banco=local_banco))
-                # Salva desconhecidos
+                    item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local_banco).first()
+                    db.session.add(ConferenciaPatrimonialItem(
+                        conferencia_id=conferencia_patrimonial.id, 
+                        item_patrimonio_id=item_banco.id if item_banco else None,
+                        descricao=descricao, 
+                        inconsistencia='local_divergente', 
+                        local_banco=local_banco
+                    ))
+                
+                # Salva desconhecidos - Cria ItemPatrimonio primeiro
                 for t, descricao in desconhecidos:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='local_divergente_desconhecida', local_banco=None))
+                    novo_item = ItemPatrimonio(
+                        tombo=t,
+                        descricao=descricao,
+                        valor='0',
+                        termo_data='',
+                        local=local,
+                        responsavel=responsavel,
+                        observacao='Item identificado em conferência manual'
+                    )
+                    db.session.add(novo_item)
+                    db.session.flush()
+                    db.session.add(ConferenciaPatrimonialItem(
+                        conferencia_id=conferencia_patrimonial.id, 
+                        item_patrimonio_id=novo_item.id,
+                        descricao=descricao, 
+                        inconsistencia='item_novo', 
+                        local_banco=None
+                    ))
+                
                 # Salva faltantes
                 for t, descricao in faltantes:
-                    db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo=t, descricao=descricao, inconsistencia='nao_encontrado', local_banco=local))
-                # Salva itens sem etiqueta
+                    item_banco = ItemPatrimonio.query.filter_by(tombo=t, local=local).first()
+                    db.session.add(ConferenciaPatrimonialItem(
+                        conferencia_id=conferencia_patrimonial.id, 
+                        item_patrimonio_id=item_banco.id if item_banco else None,
+                        descricao=descricao, 
+                        inconsistencia='nao_encontrado', 
+                        local_banco=local
+                    ))
+                
+                # Salva itens sem etiqueta - não cria ItemPatrimonio
                 for desc in sem_etiqueta:
                     if desc.strip():
-                        db.session.add(ConferenciaPatrimonialItem(conferencia_id=conferencia_patrimonial.id, tombo='', descricao=desc.strip(), inconsistencia='sem_etiqueta', local_banco=None))
+                        db.session.add(ConferenciaPatrimonialItem(
+                            conferencia_id=conferencia_patrimonial.id, 
+                            item_patrimonio_id=None,
+                            descricao=desc.strip(), 
+                            inconsistencia='sem_etiqueta', 
+                            local_banco=None
+                        ))
+                
                 db.session.commit()
                 session.pop('itens')
                 session.pop('local_manual')
@@ -410,6 +481,7 @@ def conferencia_patrimonial_manual():
     return render_template('conferencia_patrimonial_manual.html', itens=session['itens'], ultimo_descricao=ultimo_descricao, mensagem=mensagem, item_editar=item_editar, editando_idx=editar_idx, locais=locais, local_manual=session.get('local_manual', ''), responsavel_manual=session.get('responsavel_manual', ''))
 
 @bp.route('/conferencias_patrimoniais')
+@login_required
 def conferencias_patrimoniais():
     sort = request.args.get('sort', 'data')
     direction = request.args.get('direction', 'desc')
@@ -433,6 +505,7 @@ def conferencias_patrimoniais():
     return render_template('conferencias_patrimoniais.html', conferencias_patrimoniais=lista, sort=sort, direction=direction)
 
 @bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>')
+@login_required
 def conferencia_patrimonial_detalhe(conferencia_patrimonial_id):
     conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
     if conferencia_patrimonial.data.tzinfo is None:
@@ -458,6 +531,7 @@ def conferencia_patrimonial_detalhe(conferencia_patrimonial_id):
     return render_template('conferencia_patrimonial_detalhe.html', conferencia_patrimonial=conferencia_patrimonial, itens=itens, sort=sort, direction=direction)
 
 @bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/editar', methods=['GET', 'POST'])
+@login_required
 def editar_conferencia_patrimonial(conferencia_patrimonial_id):
     conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
     if request.method == 'POST':
@@ -474,6 +548,7 @@ def editar_conferencia_patrimonial(conferencia_patrimonial_id):
     return render_template('editar_conferencia_patrimonial.html', conferencia_patrimonial=conferencia_patrimonial)
 
 @bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/remover', methods=['POST'])
+@login_required
 def remover_conferencia_patrimonial(conferencia_patrimonial_id):
     conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
     ConferenciaPatrimonialItem.query.filter_by(conferencia_id=conferencia_patrimonial.id).delete()
@@ -483,6 +558,7 @@ def remover_conferencia_patrimonial(conferencia_patrimonial_id):
     return redirect(url_for('patrimonio.conferencias_patrimoniais'))
 
 @bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/item/<int:item_id>/editar', methods=['GET', 'POST'])
+@login_required
 def editar_item_conferencia_patrimonial(conferencia_patrimonial_id, item_id):
     conferencia_patrimonial = ConferenciaPatrimonial.query.get_or_404(conferencia_patrimonial_id)
     item = ConferenciaPatrimonialItem.query.get_or_404(item_id)
@@ -508,6 +584,7 @@ def editar_item_conferencia_patrimonial(conferencia_patrimonial_id, item_id):
     return render_template('editar_item_conferencia_patrimonial.html', conferencia_patrimonial=conferencia_patrimonial, item=item)
 
 @bp.route('/conferencia_patrimonial/<int:conferencia_patrimonial_id>/item/<int:item_id>/remover', methods=['POST'])
+@login_required
 def remover_item_conferencia_patrimonial(conferencia_patrimonial_id, item_id):
     item = ConferenciaPatrimonialItem.query.get_or_404(item_id)
     db.session.delete(item)
