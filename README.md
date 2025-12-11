@@ -352,6 +352,28 @@ erDiagram
 
 ---
 
+## Solução de Problemas
+
+### Erro: sqlite3.OperationalError: no such table: usuario
+
+Esse erro aparece ao tentar logar ou criar usuário quando o SQLite ainda não tem as tabelas. Siga os passos:
+
+1. Garanta que o diretório de versões do Alembic exista:
+  ```bash
+  mkdir -p migrations/versions
+  ```
+2. Gere a migração inicial e aplique (usando o compose raiz):
+  ```bash
+  docker compose -f ../docker-compose.yml exec utf-patrimonio sh -c "flask db migrate -m 'init tables' && flask db upgrade"
+  ```
+3. Crie o usuário admin:
+  ```bash
+  docker compose -f ../docker-compose.yml exec utf-patrimonio python criar_usuario.py
+  ```
+
+Após esses passos, o login deve funcionar e a tabela `usuario` estará criada.
+
+
 ## Licença
 
 Este projeto é acadêmico e pode ser adaptado conforme necessidade institucional. 
