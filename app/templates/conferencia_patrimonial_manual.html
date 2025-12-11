@@ -17,8 +17,19 @@
         {% endif %}
     </div>
     <div class="mb-3">
+        <label for="novo_local">Cadastrar novo local (opcional):</label>
+        <input type="text" name="novo_local" id="novo_local" class="form-control" placeholder="Ex.: LAB-101" {% if itens %}readonly disabled{% endif %}>
+    </div>
+    <div class="mb-3">
         <label for="responsavel">Responsável:</label>
-        <input type="text" name="responsavel" id="responsavel" class="form-control" value="{{ responsavel_manual or '' }}" required {% if itens %}readonly{% endif %}>
+        <select name="responsavel" id="responsavel" class="form-select" required {% if itens %}disabled{% endif %}>
+            {% for u in usuarios %}
+                <option value="{{ u.nome }}" {% if responsavel_manual == u.nome %}selected{% endif %}>{{ u.nome }}</option>
+            {% endfor %}
+        </select>
+        {% if itens %}
+            <input type="hidden" name="responsavel" value="{{ responsavel_manual }}">
+        {% endif %}
     </div>
     <div class="row g-2 align-items-end">
         <div class="col-auto">

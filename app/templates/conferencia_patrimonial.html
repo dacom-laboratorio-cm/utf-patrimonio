@@ -14,6 +14,11 @@
         {{ form.local(class="form-select") }}
     </div>
     <div class="mb-3">
+        {{ form.novo_local.label(class="form-label") }}
+        {{ form.novo_local(class="form-control", placeholder="Ex.: LAB-101") }}
+        <div class="form-text">Preencha para cadastrar e usar um novo local.</div>
+    </div>
+    <div class="mb-3">
         {{ form.responsavel.label(class="form-label") }}
         {{ form.responsavel(class="form-control") }}
     </div>
@@ -24,6 +29,21 @@
     <div class="mb-3">
         {{ form.csvfile.label(class="form-label") }}
         {{ form.csvfile(class="form-control") }}
+        <div class="mt-2 alert alert-secondary small" role="alert">
+          Exemplo de CSV esperado (cabeçalho obrigatório):
+          <div class="table-responsive small mb-0">
+            <table class="table table-sm table-bordered mb-0 align-middle">
+              <thead>
+                <tr><th>tombo</th><th>descricao</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>123456</td><td>Cadeira giratória</td></tr>
+                <tr><td>234567</td><td>Notebook Dell Latitude</td></tr>
+                <tr><td>345678</td><td>Projetor Epson</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
     </div>
     {{ form.submit(class="btn btn-primary") }}
   </form>

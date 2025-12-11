@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<h2 class="mb-4">{{ titulo }}</h2>
+<div class="row">
+  <div class="col-12 col-md-6 col-lg-5">
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.username.label(class="form-label") }}
+        {{ form.username(class="form-control", autofocus=true) }}
+        {% if form.username.errors %}
+          <div class="text-danger small">{% for error in form.username.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+      <div class="mb-3">
+        {{ form.nome.label(class="form-label") }}
+        {{ form.nome(class="form-control") }}
+        {% if form.nome.errors %}
+          <div class="text-danger small">{% for error in form.nome.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+      <div class="mb-3">
+        {{ form.password.label(class="form-label") }}
+        {{ form.password(class="form-control") }}
+        <div class="form-text">Deixe em branco para manter a senha atual.</div>
+        {% if form.password.errors %}
+          <div class="text-danger small">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+      <div class="d-grid gap-2 d-sm-flex">
+        {{ form.submit(class="btn btn-primary") }}
+        <a class="btn btn-outline-secondary" href="{{ url_for('auth.usuarios') }}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

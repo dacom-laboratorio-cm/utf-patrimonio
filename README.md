@@ -8,11 +8,15 @@ Este projeto é um sistema web para controle, conferência e inventário de patr
 
 ## Funcionalidades
 
+- **Autenticação de Usuários**: Sistema seguro de login/logout com senhas criptografadas.
+- **Cadastro de Usuários**: Registro de novos usuários com validação de dados.
 - **Importação de PDFs**: Extração automática de itens de patrimônio a partir de arquivos PDF.
 - **Consulta e Filtros**: Visualização dos itens cadastrados, com filtros por local, responsável e número do tombo.
 - **Conferência Patrimonial**: Realize conferências por sala, digitando os tombos encontrados e gerando relatório de conferência.
+- **Cadastro Automático**: Itens desconhecidos identificados em conferência são cadastrados automaticamente.
 - **Histórico de Conferências**: Salve e consulte conferências anteriores, com detalhamento dos itens encontrados, faltantes, desconhecidos e em local divergente.
 - **Logs de Processamento**: Acompanhe o resultado da importação de PDFs.
+- **Controle de Acesso**: Rotas protegidas, acessíveis apenas para usuários autenticados.
 
 ---
 
@@ -26,6 +30,7 @@ Veja `requirements.txt`:
 - Flask
 - Flask-SQLAlchemy
 - Flask-Migrate
+- Flask-Login
 - Flask-WTF
 - WTForms
 - pdfplumber
@@ -70,6 +75,16 @@ Veja `requirements.txt`:
 
 ---
 
+## Primeiro Acesso
+
+Crie o primeiro usuário administrador:
+```bash
+python3 criar_usuario.py
+```
+Informe username, nome completo e senha quando solicitado.
+
+---
+
 ## Como Usar
 
 1. Execute a aplicação:
@@ -77,11 +92,17 @@ Veja `requirements.txt`:
    python run.py
    ```
 2. Acesse no navegador:
-   - Importar PDFs: `http://localhost:5000/upload`
-   - Itens: `http://localhost:5000/itens`
-   - Conferências: `http://localhost:5000/conferencias_patrimoniais`
-   - Nova Conferência: `http://localhost:5000/conferencia_patrimonial`
-   - Logs: `http://localhost:5000/logs`
+   - Login: `http://localhost:5001/login`
+   - Cadastro: `http://localhost:5001/register`
+   - Home: `http://localhost:5001/`
+   - Importar PDFs: `http://localhost:5001/upload`
+   - Itens: `http://localhost:5001/patrimonios`
+   - Conferências: `http://localhost:5001/conferencias_patrimoniais`
+   - Nova Conferência: `http://localhost:5001/conferencia_patrimonial`
+   - Conferência Manual: `http://localhost:5001/conferencia_patrimonial/manual`
+   - Logs: `http://localhost:5001/logs`
+
+> **Nota:** Todas as rotas exceto a home requerem autenticação.
 
 ---
 
@@ -94,6 +115,10 @@ utf-patrimonio/
 │   ├── config.py
 │   ├── extensions.py
 │   ├── models.py
+│   ├── auth/
+│   │   ├── __init__.py
+│   │   ├── forms.py
+│   │   └── routes.py
 │   ├── patrimonio/
 │   │   ├── __init__.py
 │   │   ├── forms.py
@@ -102,23 +127,30 @@ utf-patrimonio/
 │   │   └── utils.py
 │   ├── templates/
 │   │   ├── base.html
+│   │   ├── login.html
+│   │   ├── register.html
 │   │   ├── upload.html
-│   │   ├── itens.html
+│   │   ├── patrimonios.html
 │   │   ├── logs.html
 │   │   ├── conferencia_patrimonial.html
 │   │   ├── conferencias_patrimoniais.html
 │   │   ├── conferencia_patrimonial_detalhe.html
 │   │   ├── conferencia_patrimonial_manual.html
 │   │   ├── editar_conferencia_patrimonial.html
-│   │   ├── editar_item_conferencia_patrimonial.html
+│   │   ├── editar_item_levantamento.html
 │   │   ├── 404.html
 │   │   └── 500.html
 │   └── static/
+├── docs/
+│   ├── autenticacao.md
+│   └── regra-conferencia.md
 ├── instance/
 │   └── app.db
 ├── migrations/
+│   └── versions/
 ├── uploads/
 ├── requirements.txt
+├── criar_usuario.py
 ├── run.py
 └── README.md
 ```
@@ -129,6 +161,13 @@ utf-patrimonio/
 
 ```mermaid
 erDiagram
+    Usuario {
+        Integer id PK
+        String username UK
+        String password_hash
+        String nome
+        DateTime criado_em
+    }
     ItemPatrimonio {
         Integer id PK
         String tombo
@@ -157,7 +196,7 @@ erDiagram
     }
     ConferenciaPatrimonialItem {
         Integer id PK
-        Integer conferencia_patrimonial_id FK
+        Integer conferencia_id FK
         Integer item_patrimonio_id FK
         String inconsistencia
         String local_banco
@@ -175,6 +214,18 @@ erDiagram
 - O sistema utiliza SQLite por padrão, mas pode ser adaptado para outros bancos.
 - O upload de PDFs e o processamento dependem do layout dos arquivos.
 - A conferência patrimonial permite salvar e consultar históricos para auditoria.
+- Todas as senhas são criptografadas usando Werkzeug.
+- O sistema cria automaticamente itens patrimoniais para tombos desconhecidos identificados em conferências.
+
+---
+
+## Segurança
+
+- **Autenticação**: Flask-Login gerencia sessões de usuário
+- **Senhas**: Criptografadas com `werkzeug.security`
+- **Proteção de Rotas**: Decorator `@login_required` protege endpoints sensíveis
+- **CSRF**: Proteção automática via Flask-WTF
+- **Sessões**: Suporte a "lembrar-me" para conveniência do usuário
 
 ---
 
@@ -190,7 +241,12 @@ erDiagram
 - **Cadastro Manual:**
   - É possível cadastrar itens manualmente durante a conferência patrimonial.
   - Para itens sem etiqueta (sem tombo), apenas a descrição é obrigatória.
-  - Para itens novos, o campo `observacao` recebe "obtido de conferência manual".
+  - Para itens novos descobertos em conferência, o campo `observacao` recebe "Item identificado em conferência manual".
+
+- **Cadastro Automático:**
+  - Quando um tombo desconhecido é identificado em conferência, o sistema cria automaticamente um `ItemPatrimonio`.
+  - O item é vinculado ao local e responsável da conferência.
+  - Permite rastreabilidade e regularização posterior.
 
 ### 2. Conferência Patrimonial
 
@@ -205,19 +261,20 @@ erDiagram
   - **Encontrado em outro local:**
     - O tombo existe no banco, mas está cadastrado para outro local.
     - `inconsistencia = 'local_divergente'`
-  - **Encontrado, mas origem desconhecida:**
-    - O tombo existe no banco, mas não foi possível determinar o local de origem.
-    - `inconsistencia = 'local_divergente_desconhecida'`
+  - **Item novo (não cadastrado):**
+    - O tombo não existe no banco. O sistema cria automaticamente o `ItemPatrimonio`.
+    - `inconsistencia = 'item_novo'`
   - **Não encontrado:**
-    - O tombo informado não existe no banco.
+    - O tombo está cadastrado no banco para o local, mas não foi encontrado fisicamente.
     - `inconsistencia = 'nao_encontrado'`
   - **Sem etiqueta:**
     - O item foi informado sem tombo (apenas descrição).
     - `inconsistencia = 'sem_etiqueta'`
 
 - **Regras de Referência:**
-  - Todo item de conferência (`ConferenciaPatrimonialItem`) sempre referencia um `ItemPatrimonio` existente.
-  - Se o tombo não existe, o sistema cria o `ItemPatrimonio` antes de referenciar.
+  - Todo item de conferência (`ConferenciaPatrimonialItem`) sempre referencia um `ItemPatrimonio` existente (exceto itens sem etiqueta).
+  - Se o tombo não existe, o sistema cria automaticamente o `ItemPatrimonio` antes de referenciar.
+  - Itens sem etiqueta não criam `ItemPatrimonio` (`item_patrimonio_id = NULL`).
 
 ### 3. Logs de Processamento
 
@@ -249,9 +306,17 @@ erDiagram
 
 ### 6. Observações Gerais
 
-- O campo `observacao` de `ItemPatrimonio` armazena o nome do PDF de origem ou a informação "obtido de conferência manual".
+- O campo `observacao` de `ItemPatrimonio` armazena o nome do PDF de origem ou a informação "Item identificado em conferência manual".
 - O sistema não permite duplicidade de tombos para o mesmo local e observação.
 - Todas as ações relevantes são registradas para auditoria e histórico.
+- Itens desconhecidos identificados em conferência são automaticamente cadastrados com status `'item_novo'`.
+
+---
+
+## Documentação Adicional
+
+- [Autenticação](docs/autenticacao.md) - Detalhes sobre o sistema de autenticação
+- [Regras de Conferência](docs/regra-conferencia.md) - Regras de negócio para itens desconhecidos
 
 ---
 

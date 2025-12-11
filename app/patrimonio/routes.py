@@ -1,9 +1,9 @@
 from flask import render_template, request, redirect, url_for, flash, session
-from flask_login import login_required
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from ..models import ItemPatrimonio, LogProcessamento, ConferenciaPatrimonial, ConferenciaPatrimonialItem
+from ..models import ItemPatrimonio, LogProcessamento, ConferenciaPatrimonial, ConferenciaPatrimonialItem, Usuario
 from . import bp
 from .services import processar_pdf
 from .forms import UploadPDFForm, ConferenciaPatrimonialForm, FiltroPatrimoniosForm
@@ -145,11 +145,19 @@ def conferencia_patrimonial():
     locais = db.session.query(ItemPatrimonio.local).distinct().all()
     locais = sorted([l[0] for l in locais if l[0]])
     form = ConferenciaPatrimonialForm()
+    usuarios = Usuario.query.order_by(Usuario.nome.asc()).all()
+    form.responsavel.choices = [(u.nome, u.nome) for u in usuarios] or [(current_user.nome, current_user.nome)]
+    if not form.responsavel.data:
+        form.responsavel.data = current_user.nome
     form.local.choices = [(l, l) for l in locais]
     relatorio = None
     if form.validate_on_submit():
-        local = form.local.data
+        local_input = form.novo_local.data.strip() if form.novo_local.data else ''
+        local = local_input or form.local.data
         responsavel = form.responsavel.data
+        if not local:
+            flash('Informe um local ou cadastre um novo.')
+            return render_template('conferencia_patrimonial.html', form=form, relatorio=None)
         tombos_lista = []
         descricoes_csv = {}
         sem_etiqueta = []
@@ -304,7 +312,7 @@ def conferencia_patrimonial_manual():
     if 'local_manual' not in session:
         session['local_manual'] = ''
     if 'responsavel_manual' not in session:
-        session['responsavel_manual'] = ''
+        session['responsavel_manual'] = current_user.nome
     print('DEBUG[INICIO]: session[local_manual]=', session.get('local_manual'), 'session[itens]=', session.get('itens'), 'session[responsavel_manual]=', session.get('responsavel_manual'))
     mensagem = None
     editar_idx = request.args.get('editar')
@@ -312,6 +320,7 @@ def conferencia_patrimonial_manual():
     # Buscar locais distintos do banco
     locais = db.session.query(ItemPatrimonio.local).distinct().all()
     locais = sorted([l[0] for l in locais if l[0]])
+    usuarios = Usuario.query.order_by(Usuario.nome.asc()).all()
     if remover_idx is not None:
         try:
             idx = int(remover_idx)
@@ -339,12 +348,16 @@ def conferencia_patrimonial_manual():
             tombo = request.form.get('tombo', '').strip()
             descricao = request.form.get('descricao', '').strip()
             local = request.form.get('local')
+            novo_local = request.form.get('novo_local', '').strip()
             responsavel = request.form.get('responsavel', '').strip()
             sem_etiqueta_flag = request.form.get('sem_etiqueta')
+            # Prioriza novo local informado
+            if novo_local:
+                local = novo_local
             # Salva local e responsável apenas no primeiro item
-            if not session['local_manual']:
+            if not session['local_manual'] and local:
                 session['local_manual'] = local
-            if not session['responsavel_manual']:
+            if responsavel:
                 session['responsavel_manual'] = responsavel
             # Se checkbox sem etiqueta marcado, adiciona como sem etiqueta
             if sem_etiqueta_flag:
@@ -478,7 +491,7 @@ def conferencia_patrimonial_manual():
                 mensagem = 'Informe o local, o responsável e adicione pelo menos um item.'
                 print('DEBUG[SALVAR][ERRO]: local_manual=', local, 'session[itens]=', session.get('itens'), 'responsavel_manual=', responsavel)
     ultimo_descricao = session['itens'][-1]['descricao'] if session['itens'] else ''
-    return render_template('conferencia_patrimonial_manual.html', itens=session['itens'], ultimo_descricao=ultimo_descricao, mensagem=mensagem, item_editar=item_editar, editando_idx=editar_idx, locais=locais, local_manual=session.get('local_manual', ''), responsavel_manual=session.get('responsavel_manual', ''))
+    return render_template('conferencia_patrimonial_manual.html', itens=session['itens'], ultimo_descricao=ultimo_descricao, mensagem=mensagem, item_editar=item_editar, editando_idx=editar_idx, locais=locais, local_manual=session.get('local_manual', ''), responsavel_manual=session.get('responsavel_manual', ''), usuarios=usuarios)
 
 @bp.route('/conferencias_patrimoniais')
 @login_required

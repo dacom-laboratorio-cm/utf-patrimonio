@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Usuários{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 gap-2 flex-wrap">
+  <h2 class="mb-0">Usuários</h2>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('auth.usuario_novo') }}">Novo usuário</a>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Usuário</th>
+        <th class="d-none d-sm-table-cell">Nome</th>
+        <th class="d-none d-lg-table-cell">Criado em</th>
+        <th class="text-end">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for usuario in usuarios %}
+      <tr>
+        <td><strong>{{ usuario.username }}</strong></td>
+        <td class="d-none d-sm-table-cell">{{ usuario.nome }}</td>
+        <td class="d-none d-lg-table-cell"><small>{{ usuario.criado_em.strftime('%d/%m/%Y') if usuario.criado_em else '-' }}</small></td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('auth.usuario_editar', user_id=usuario.id) }}">Editar</a>
+          <button class="btn btn-sm btn-outline-danger" onclick="removerUsuario({{ usuario.id }})">Remover</button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-center text-muted">Nenhum usuário cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<form id="formRemover" method="post" style="display:none;">
+  <input type="hidden" name="_method" value="DELETE">
+</form>
+<script>
+function removerUsuario(id) {
+  if (confirm('Remover este usuário?')) {
+    document.getElementById('formRemover').action = '/usuarios/' + id + '/remover';
+    document.getElementById('formRemover').submit();
+  }
+}
+</script>
+{% endblock %}
