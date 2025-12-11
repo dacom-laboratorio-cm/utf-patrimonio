@@ -6,11 +6,12 @@
 <form method="post" id="form-levantamento-manual">
     <div class="mb-3">
         <label for="local">Local:</label>
-        <select name="local" id="local" class="form-control" required {% if itens %}readonly disabled{% endif %}>
+        <select name="local" id="local" class="form-control" required {% if itens %}readonly disabled{% else %}onchange="toggleNovoLocalManual()"{% endif %}>
             <option value="">Selecione o local</option>
             {% for l in locais %}
                 <option value="{{ l }}" {% if (local_manual == l) or (request.form.local == l) %}selected{% endif %}>{{ l }}</option>
             {% endfor %}
+            <option value="Outro">Outro</option>
         </select>
         {% if itens %}
             <input type="hidden" name="local" value="{{ local_manual }}">
@@ -18,7 +19,8 @@
     </div>
     <div class="mb-3">
         <label for="novo_local">Cadastrar novo local (opcional):</label>
-        <input type="text" name="novo_local" id="novo_local" class="form-control" placeholder="Ex.: LAB-101" {% if itens %}readonly disabled{% endif %}>
+        <input type="text" name="novo_local" id="novo_local" class="form-control" placeholder="Ex.: LAB-101" {% if itens %}readonly disabled{% else %}disabled{% endif %}>
+        <div class="form-text">Selecione "Outro" no local para cadastrar um novo.</div>
     </div>
     <div class="mb-3">
         <label for="responsavel">Responsável:</label>
@@ -69,8 +71,20 @@ function toggleTombo() {
         tombo.setAttribute('required', 'required');
     }
 }
+function toggleNovoLocalManual() {
+    var local = document.getElementById('local');
+    var novoLocal = document.getElementById('novo_local');
+    if (local.value === 'Outro') {
+        novoLocal.disabled = false;
+        novoLocal.focus();
+    } else {
+        novoLocal.disabled = true;
+        novoLocal.value = '';
+    }
+}
 window.onload = function() {
     toggleTombo();
+    toggleNovoLocalManual();
 };
 </script>
 

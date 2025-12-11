@@ -11,12 +11,12 @@
     {{ form.hidden_tag() }}
     <div class="mb-3">
         {{ form.local.label(class="form-label") }}
-        {{ form.local(class="form-select") }}
+        {{ form.local(class="form-select", id="local", onchange="toggleNovoLocal()") }}
     </div>
     <div class="mb-3">
         {{ form.novo_local.label(class="form-label") }}
-        {{ form.novo_local(class="form-control", placeholder="Ex.: LAB-101") }}
-        <div class="form-text">Preencha para cadastrar e usar um novo local.</div>
+        {{ form.novo_local(class="form-control", id="novo_local", placeholder="Ex.: LAB-101", disabled=True) }}
+        <div class="form-text">Selecione "Outro" no local para cadastrar um novo.</div>
     </div>
     <div class="mb-3">
         {{ form.responsavel.label(class="form-label") }}
@@ -47,6 +47,23 @@
     </div>
     {{ form.submit(class="btn btn-primary") }}
   </form>
+
+<script>
+function toggleNovoLocal() {
+    var local = document.getElementById('local');
+    var novoLocal = document.getElementById('novo_local');
+    if (local.value === 'Outro') {
+        novoLocal.disabled = false;
+        novoLocal.focus();
+    } else {
+        novoLocal.disabled = true;
+        novoLocal.value = '';
+    }
+}
+window.onload = function() {
+    toggleNovoLocal();
+};
+</script>
 
   {% if relatorio %}
     <h3 class="mt-4">Relatório da Conferência Patrimonial</h3>

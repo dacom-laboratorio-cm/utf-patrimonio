@@ -149,7 +149,7 @@ def conferencia_patrimonial():
     form.responsavel.choices = [(u.nome, u.nome) for u in usuarios] or [(current_user.nome, current_user.nome)]
     if not form.responsavel.data:
         form.responsavel.data = current_user.nome
-    form.local.choices = [(l, l) for l in locais]
+    form.local.choices = [(l, l) for l in locais] + [('Outro', 'Outro')]
     relatorio = None
     if form.validate_on_submit():
         local_input = form.novo_local.data.strip() if form.novo_local.data else ''
