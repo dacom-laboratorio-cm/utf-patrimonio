@@ -1,13 +1,40 @@
 version: '3.9'
 services:
-  web:
-    build: .
-    container_name: flask_app
-    ports:
-      - "5001:5001"
+  # utf-patrimonio-web:
+  #   build: .
+  #   container_name: utf-patrimonio-web
+  #   ports:
+  #     - "5001:5001"
+  #   environment:
+  #     - FLASK_ENV=development
+  #     - FLASK_APP=run.py
+  #   volumes:
+  #     - .:/app
+  #   command: sh -c "flask db upgrade && python3 run.py"
+
+  utf-patrimonio-traefik:
+    build: ./utf-patrimonio
+    container_name: utf-patrimonio-web
+    restart: unless-stopped
     environment:
       - FLASK_ENV=development
       - FLASK_APP=run.py
+      - APPLICATION_ROOT=/patrimonio
     volumes:
-      - .:/app
+      - ./utf-patrimonio:/app
     command: sh -c "flask db upgrade && python3 run.py"
+    expose:
+      - "5001"
+    labels:
+      - "traefik.enable=true"
+      # Opção 1: Com PathPrefix em domínio existente
+      - "traefik.http.routers.utf-patrimonio.rule=Host(`dacom.cm.utfpr.edu.br`) && PathPrefix(`/patrimonio`)"
+      - "traefik.http.routers.utf-patrimonio.entrypoints=websecure"
+      - "traefik.http.routers.utf-patrimonio.tls=true"
+      - "traefik.http.routers.utf-patrimonio.tls.certresolver=myresolver"
+      # Se usar PathPrefix, adicione o middleware para remover o prefixo
+      - "traefik.http.middlewares.utf-patrimonio-strip.stripprefix.prefixes=/patrimonio"
+      - "traefik.http.routers.utf-patrimonio.middlewares=utf-patrimonio-strip"
+      - "traefik.http.services.utf-patrimonio.loadbalancer.server.port=5001"
+    networks:
+      - web

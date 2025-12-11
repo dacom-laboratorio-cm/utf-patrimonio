@@ -21,18 +21,18 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm sticky-top" role="navigation" aria-label="Menu principal">
   <div class="container-fluid px-3">
-    <a class="navbar-brand fw-semibold" href="/">UTF Patrimônio</a>
+    <a class="navbar-brand fw-semibold" href="{{ url_for('patrimonio.index') }}">UTF Patrimônio</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegação">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         {% if current_user.is_authenticated %}
-        <li class="nav-item"><a class="nav-link" href="/upload">Importar PDFs</a></li>
-        <li class="nav-item"><a class="nav-link" href="/logs">Logs</a></li>
-        <li class="nav-item"><a class="nav-link" href="/patrimonios">Patrimônio</a></li>
-        <li class="nav-item"><a class="nav-link" href="/conferencias_patrimoniais">Conferências</a></li>
-        <li class="nav-item"><a class="nav-link" href="/usuarios">Usuários</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('patrimonio.upload') }}">Importar PDFs</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('patrimonio.logs') }}">Logs</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('patrimonio.patrimonios') }}">Patrimônio</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('patrimonio.conferencias_patrimoniais') }}">Conferências</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.usuarios') }}">Usuários</a></li>
         {% endif %}
       </ul>
       <div class="d-flex flex-column flex-lg-row align-items-start align-lg-center gap-2 mt-2 mt-lg-0">
