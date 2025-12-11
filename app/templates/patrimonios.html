@@ -28,7 +28,7 @@ document.getElementById('filtro-form').onsubmit = function(e) {
     const local = document.getElementsByName('local')[0].value;
     const responsavel = document.getElementsByName('responsavel')[0].value;
     const tombo = document.getElementsByName('tombo')[0].value;
-    let url = '/patrimonios/';
+    let url = '/patrimonio/patrimonios/';
     if (local && responsavel) {
         url += 'local/' + encodeURIComponent(local) + '/responsavel/' + encodeURIComponent(responsavel) + '/';
     } else if (local) {
