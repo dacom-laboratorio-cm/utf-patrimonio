@@ -16,6 +16,5 @@ class ConferenciaPatrimonialForm(FlaskForm):
     local = SelectField('Local', choices=[], validate_choice=False)
     novo_local = StringField('Cadastrar novo local (opcional)')
     responsavel = SelectField('Responsável', choices=[], validators=[DataRequired()], validate_choice=False)
-    tombos = TextAreaField('Tombos encontrados (um por linha ou separados por vírgula)', validators=[])
     csvfile = FileField('Importar CSV de tombos (cabeçalho: tombo,descricao)')
     submit = SubmitField('Processar conferência') 

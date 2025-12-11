@@ -87,20 +87,52 @@ Informe username, nome completo e senha quando solicitado.
 
 ## Como Usar
 
+### Opção 1: Execução Local
+
 1. Execute a aplicação:
    ```bash
    python run.py
    ```
-2. Acesse no navegador:
-   - Login: `http://localhost:5001/login`
-   - Cadastro: `http://localhost:5001/register`
-   - Home: `http://localhost:5001/`
-   - Importar PDFs: `http://localhost:5001/upload`
-   - Itens: `http://localhost:5001/patrimonios`
-   - Conferências: `http://localhost:5001/conferencias_patrimoniais`
-   - Nova Conferência: `http://localhost:5001/conferencia_patrimonial`
-   - Conferência Manual: `http://localhost:5001/conferencia_patrimonial/manual`
-   - Logs: `http://localhost:5001/logs`
+2. Acesse no navegador em `http://localhost:5001`
+
+### Opção 2: Docker Compose (Recomendado)
+
+1. Build e execute o container:
+   ```bash
+   docker-compose up --build
+   ```
+   
+   Ou para executar em segundo plano:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+2. Acesse no navegador em `http://localhost:5001`
+
+3. Para parar o container:
+   ```bash
+   docker-compose down
+   ```
+
+4. Criar o primeiro usuário (com container rodando):
+   ```bash
+   docker-compose exec web python3 criar_usuario.py
+   ```
+
+> **Nota sobre Docker:** As migrações do banco são executadas automaticamente ao iniciar o container. O diretório do projeto é montado como volume, permitindo desenvolvimento com hot-reload.
+
+### Rotas Disponíveis
+
+- Login: `http://localhost:5001/login`
+- Cadastro: `http://localhost:5001/register`
+- Home: `http://localhost:5001/`
+- Importar PDFs: `http://localhost:5001/upload`
+- Itens: `http://localhost:5001/patrimonios`
+- Conferências: `http://localhost:5001/conferencias_patrimoniais`
+- Nova Conferência: `http://localhost:5001/conferencia_patrimonial`
+- Conferência Manual: `http://localhost:5001/conferencia_patrimonial/manual`
+- Logs: `http://localhost:5001/logs`
+- Usuários: `http://localhost:5001/usuarios`
 
 > **Nota:** Todas as rotas exceto a home requerem autenticação.
 

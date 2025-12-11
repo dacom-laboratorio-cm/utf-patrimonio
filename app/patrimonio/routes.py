@@ -182,11 +182,7 @@ def conferencia_patrimonial():
             print('DEBUG - Tombos lidos do CSV:', tombos_lista)
             print('DEBUG - Descrições lidas do CSV:', descricoes_csv)
             print('DEBUG - Itens sem etiqueta:', sem_etiqueta)
-        # Processar tombos do textarea (adiciona ao que veio do CSV)
-        tombos_input = form.tombos.data.replace(',', '\n') if form.tombos.data else ''
-        for t in [t.strip() for t in tombos_input.split('\n') if t.strip()]:
-            if t not in tombos_lista:
-                tombos_lista.append(t)
+        
         tombos_set = set(tombos_lista)
         # Buscar todos os itens do local no banco
         itens_banco_local = ItemPatrimonio.query.filter_by(local=local).all()
