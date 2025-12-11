@@ -27,14 +27,12 @@ services:
       - "5001"
     labels:
       - "traefik.enable=true"
-      # Opção 1: Com PathPrefix em domínio existente
+      # Roteia /patrimonio no domínio dacom.cm.utfpr.edu.br
       - "traefik.http.routers.utf-patrimonio.rule=Host(`dacom.cm.utfpr.edu.br`) && PathPrefix(`/patrimonio`)"
       - "traefik.http.routers.utf-patrimonio.entrypoints=websecure"
       - "traefik.http.routers.utf-patrimonio.tls=true"
       - "traefik.http.routers.utf-patrimonio.tls.certresolver=myresolver"
-      # Se usar PathPrefix, adicione o middleware para remover o prefixo
-      - "traefik.http.middlewares.utf-patrimonio-strip.stripprefix.prefixes=/patrimonio"
-      - "traefik.http.routers.utf-patrimonio.middlewares=utf-patrimonio-strip"
+      # Sem StripPrefix: app já serve sob /patrimonio
       - "traefik.http.services.utf-patrimonio.loadbalancer.server.port=5001"
     networks:
       - web

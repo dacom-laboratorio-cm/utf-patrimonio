@@ -22,10 +22,11 @@ def create_app():
         return Usuario.query.get(int(user_id))
     
     from .patrimonio import bp as patrimonio_bp
-    app.register_blueprint(patrimonio_bp)
+    # Prefixa todas as rotas do app sob /patrimonio
+    app.register_blueprint(patrimonio_bp, url_prefix='/patrimonio')
     
     from .auth import bp as auth_bp
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/patrimonio')
 
     @app.errorhandler(404)
     def not_found(e):
